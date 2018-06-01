@@ -30,6 +30,7 @@ Notes:
 #include "ast/seq_decl_plugin.h"
 #include "ast/pb_decl_plugin.h"
 #include "ast/fpa_decl_plugin.h"
+#include "ast/sloth_decl_plugin.h"
 #include "ast/ast_pp.h"
 #include "ast/rewriter/var_subst.h"
 #include "ast/pp.h"
@@ -670,6 +671,11 @@ bool cmd_context::logic_has_fpa() const {
     return !has_logic() || smt_logics::logic_has_fpa(m_logic);
 }
 
+bool cmd_context::logic_has_sloth() const {
+    //return !has_logic() || smt_logics::logic_has_fpa(m_logic); TODOsl
+    return !has_logic();
+}
+
 bool cmd_context::logic_has_array() const {
     return !has_logic() || smt_logics::logic_has_array(m_logic);
 }
@@ -694,6 +700,7 @@ void cmd_context::init_manager_core(bool new_manager) {
         register_plugin(symbol("pb"),       alloc(pb_decl_plugin), logic_has_pb());
         register_plugin(symbol("fpa"),      alloc(fpa_decl_plugin), logic_has_fpa());
         register_plugin(symbol("datalog_relation"), alloc(datalog::dl_decl_plugin), !has_logic());
+        register_plugin(symbol("sloth"),    alloc(sloth_decl_plugin), logic_has_sloth());
     }
     else {
         // the manager was created by an external module
