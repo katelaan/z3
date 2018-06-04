@@ -40,7 +40,7 @@ z3_add_component(ast
     seq_decl_plugin.cpp
     shared_occs.cpp
     static_features.cpp
-    sloth_decl_plugin.cpp
+    slstar_decl_plugin.cpp
     used_vars.cpp
     well_sorted.cpp
   COMPONENT_DEPENDENCIES
