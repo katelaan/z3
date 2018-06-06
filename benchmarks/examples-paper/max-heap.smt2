@@ -33,9 +33,9 @@
 ;; Assert a few pointers as a classical conjunction to force size
 (assert 
       (sep
-            (Tree x l r)
-            (Tree l ll lr)
-            (Tree r rl rr)
+            (pto x l r)
+            (pto l ll lr)
+            (pto r rl rr)
             (pto x xdata)
             (pto r rdata)
-            (pto l ldata)))
+            (pto l ldata) ))

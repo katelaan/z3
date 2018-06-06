@@ -34,16 +34,16 @@
 (define-fun notA ( (x Int) ) Bool (not (= x A)) )
 (assert 
     (sep 
-        (List (data =) x)
-        (List (data notA) y) ))
+        (List (unary =) x)
+        (List (unary notA) y) ))
 ; Should force A to occur in the list that starts in X. But currently doesn't...
 (assert (not (sep 
-            (List (data notA) x)
-            (List (data =) y) )))
+            (List (unary notA) x)
+            (List (unary =) y) )))
 (assert (sep 
             (= A 9001)
-            (List x b null) 
-            (List y d null) 
+            (pto x b null) 
+            (pto y d null) 
             (pto x xdata) 
             (pto b bdata)
             (pto y ydata) 

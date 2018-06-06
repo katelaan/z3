@@ -28,11 +28,11 @@
 (declare-const ddata Int)
 
 (define-fun not-eq ( (x Int) (y Int) ) Bool (not (= x y)) )
-(assert (List (data not-eq) a))
+(assert (List (next not-eq) a))
 ;; Assert a few pointers as a classical conjunction to force length
 (assert 
     (sep
-        (List a b c d e) 
+        (pto a b c d e)
         (pto a adata)
         (pto b bdata)
         (pto c cdata)

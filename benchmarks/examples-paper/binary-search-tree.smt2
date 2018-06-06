@@ -31,19 +31,12 @@
 (declare-const ldata Int)
 (declare-const rdata Int)
 (assert    (Tree (left <) (right >) x) )
-; Tree(x, l,r) * Tree(l, ll, lr) * Tree(r, rl, rl) * x ->d xdata *  l ->d ldata * r ->d rdata
+; Assert a few pointers as a classical conjunction to force size
 (assert 
       (sep
-            (Tree x l r)
-            (Tree l ll lr)
-            (Tree r rl rr)
+            (pto x l r)
+            (pto l ll lr)
+            (pto r rl rr)
             (pto x xdata)
             (pto r rdata)
-            (pto l ldata)))
-;alternative
-;(assert 
-;      (sep
-;            (Tree x (l ll lr) (r rl rr))
-;            (pto x xdata)
-;            (pto r rdata)
-;            (pto l ldata)))
+            (pto l ldata) ))

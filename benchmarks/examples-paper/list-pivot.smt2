@@ -63,14 +63,14 @@
 (define-fun lt-M ((x Int)) Bool (< x M) )
 (define-fun gt-M ((x Int)) Bool (> x M) )
 (assert (sep
-          (List (data lt-M) x m)
-          (List (data gt-M) y)
-          (List m y)
+          (List (unary lt-M) x m)
+          (List (unary gt-M) y)
+          (pto m y)
           (pto m M) ))
 ;; Assert a few pointers as a classical conjunction to force length
 (assert 
   (sep
-    (List x a b m y d e f g)
+    (pto x a b m y d e f g)
     (pto x xdata) 
     (pto a adata)
     (pto b bdata) 

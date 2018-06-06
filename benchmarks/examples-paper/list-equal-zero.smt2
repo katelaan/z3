@@ -29,11 +29,11 @@
 (declare-const ddata Int)
 
 (define-fun is-z ( (x Int) ) Bool (not (= x 0)) )
-(assert (List (data is-z) a))
+(assert (List (unary is-z) a))
 ;; Assert a few pointers as a classical conjunction to force length
 (assert 
     (sep
-        (List a b c d e) 
+        (pto a b c d e) 
         (pto a adata)
         (pto b bdata)
         (pto c cdata)

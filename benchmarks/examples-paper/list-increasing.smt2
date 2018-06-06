@@ -28,11 +28,11 @@
 (declare-const cdata Int)
 (declare-const ddata Int)
 
-(assert (List (data <) a))
+(assert (List (next <) a))
 ;; Assert a few pointers as a classical conjunction to force length
 (assert 
     (sep
-        (List a b c d e) 
+        (pto a b c d e) 
         (pto a adata)
         (pto b bdata)
         (pto c cdata)
