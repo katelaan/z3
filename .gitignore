@@ -22,6 +22,7 @@ ocamlz3
 release/*
 build/*
 build-dist/*
+install/*
 dist/*
 doc/html/*
 # GTAGS generated files
@@ -75,3 +76,4 @@ src/api/ml/z3.mllib
 *.bak
 doc/api
 doc/code
+.vscode/tags

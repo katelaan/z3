@@ -1,4 +1,10 @@
 {
     "python.linting.enabled": false,
-    "python.pythonPath": "/usr/bin/python3"
+    "python.pythonPath": "/usr/bin/python3",
+    "files.associations": {
+        "*.tcc": "cpp",
+        "list": "cpp",
+        "deque": "cpp",
+        "vector": "cpp"
+    }
 }
