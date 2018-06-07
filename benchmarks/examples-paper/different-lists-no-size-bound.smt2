@@ -27,9 +27,9 @@
 (define-fun notA ( (x Int) ) Bool (not (= x A)) )
 (assert 
     (sep (= A 9001)
-        (List (unary =) x )
-        (List (unary notA ) y) ))
+        (list (unary (= alpha alpha) x )
+        (list (unary (notA alpha) ) y) )))
 (assert 
     (not (sep 
-        (List (unary notA) x)
-        (List (unary =) y) )))
+        (list (unary (notA alpha)) x)
+        (list (unary (= alpha alpha) y) ))))
