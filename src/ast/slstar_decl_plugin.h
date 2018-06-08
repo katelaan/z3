@@ -37,6 +37,7 @@ class slstar_decl_plugin : public decl_plugin {
     
 private:
     sort *              m_int_sort;
+    sort *              m_dpred_sort;
 
     func_decl * mk_support_decl(symbol name, decl_kind k, unsigned num_parameters, 
                                     parameter const * parameters, unsigned arity,
@@ -44,6 +45,12 @@ private:
     func_decl * mk_data_predicate_decl(symbol name, decl_kind k, unsigned num_parameters, 
                                     parameter const * parameters, unsigned arity,
                                     sort * const * domain, sort * range);
+    func_decl * mk_pred_func_decl(symbol name, std::string loc, decl_kind loc_k,
+                                    decl_kind k, unsigned num_parameters, parameter const * parameters, 
+                                    unsigned arity, sort * const * domain, sort * range);
+    func_decl * mk_pto_func_decl(symbol name, std::string loc, decl_kind loc_k,unsigned exp_arity,
+                                    decl_kind k, unsigned num_parameters, parameter const * parameters, 
+                                    unsigned arity, sort * const * domain, sort * range);
 public:
 
     decl_plugin * mk_fresh();

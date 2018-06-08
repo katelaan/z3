@@ -74,24 +74,71 @@ func_decl * slstar_decl_plugin::mk_support_decl(symbol name, decl_kind k, unsign
         m_manager->raise_exception("Support variables must have arity 0");
         return nullptr;
     }
-    sort * sort = m_int_sort;
-    if(num_parameters == 1 && parameters[0].is_ast() && is_sort(parameters[0].get_ast())) {
-        sort = to_sort(parameters[0].get_ast());
-    } else if(num_parameters != 0) {
-        m_manager->raise_exception("First parameter must be sort");
-        return nullptr;
-    }
+    sort * data_sort = m_int_sort; // slTODO get sort from parent
 
-    return m_manager->mk_func_decl(name, arity, domain, sort, func_decl_info(m_family_id, k));                                   
+    return m_manager->mk_func_decl(name, arity, domain, data_sort, func_decl_info(m_family_id, k));                                   
 }
 
 func_decl * slstar_decl_plugin::mk_data_predicate_decl(symbol name, decl_kind k, unsigned num_parameters, 
                                     parameter const * parameters, unsigned arity,
                                     sort * const * domain, sort * range) {                                    
-    return m_manager->mk_func_decl(name, arity, domain, m_manager->mk_uninterpreted_sort(symbol("Dpred")), func_decl_info(m_family_id, k));
+    return m_manager->mk_func_decl(name, arity, domain, m_dpred_sort, func_decl_info(m_family_id, k));
 }
-                                    
 
+func_decl * slstar_decl_plugin::mk_pred_func_decl(symbol name, std::string loc, decl_kind loc_k,
+                                    decl_kind k, unsigned num_parameters, parameter const * parameters, 
+                                    unsigned arity, sort * const * domain, sort * range) {
+    /*sort * data_sort;
+    if(num_parameters == 1 && parameters[0].is_ast() && is_sort(parameters[0].get_ast())) {
+        data_sort = to_sort(parameters[0].get_ast());
+    } else {
+        data_sort = m_int_sort;
+    }*/
+    unsigned arg_ptr = 0;
+    //while( arg_ptr < arity && domain[arg_ptr]->get_id() == m_dpred_sort->get_id()){
+    while( arg_ptr < arity && domain[arg_ptr]->is_sort_of(m_dpred_sort->get_family_id(), m_dpred_sort->get_decl_kind())){
+        arg_ptr++;
+    }
+    std::string msg;
+    if(arg_ptr == arity) {
+        msg = "predicate needs at least one " + loc + " argument";
+        m_manager->raise_exception(msg.c_str());
+        return nullptr;
+    }
+    while( arg_ptr < arity && domain[arg_ptr]->is_sort_of(m_family_id, loc_k)){
+        arg_ptr++;
+    }
+    if(arg_ptr != arity) {
+        msg= "invalid argument sort(s). Expected: (" + std::string(name.bare_str()) + " Dpred*, " + loc + "+) ";
+        m_manager->raise_exception(msg.c_str());
+        return nullptr;
+    }
+    return m_manager->mk_func_decl(name, arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+}
+
+func_decl * slstar_decl_plugin::mk_pto_func_decl(symbol name, std::string loc, decl_kind loc_k,unsigned exp_arity,
+                                    decl_kind k, unsigned num_parameters, parameter const * parameters, 
+                                    unsigned arity, sort * const * domain, sort * range) {
+    std::string msg;
+    if(exp_arity != arity) {
+        msg = "Arity missmatch for '" + std::string(name.bare_str()) + "'";
+        m_manager->raise_exception(msg.c_str());
+        return nullptr;
+    }
+    //TODOsl check for DataSort
+    if(loc_k != -1 ) {
+        unsigned arg_ptr;
+        while( arg_ptr < arity && domain[arg_ptr]->is_sort_of(m_family_id, loc_k)){
+            arg_ptr++;
+        }
+        if(arg_ptr != arity) {
+            msg = "invalid argument sort(s). Expected: (" + std::string(name.bare_str()) + " " + loc + " DataSort) ";
+            m_manager->raise_exception(msg.c_str());
+            return nullptr;
+        }
+    }
+    return m_manager->mk_func_decl(name, arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+}
 
 func_decl * slstar_decl_plugin::mk_func_decl(decl_kind k, unsigned num_parameters, parameter const * parameters,
                                      unsigned arity, sort * const * domain, sort * range) {
@@ -115,19 +162,21 @@ func_decl * slstar_decl_plugin::mk_func_decl(decl_kind k, unsigned num_parameter
     case OP_SLSTAR_SEP:
         return m_manager->mk_func_decl(symbol("sep"), arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
     case OP_SLSTAR_POINTSTOL:
-        return m_manager->mk_func_decl(symbol("ptol"), arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+        return mk_pto_func_decl(symbol("ptol"), "TreeLoc", SLSTAR_TREE_LOC, 2, k, num_parameters, parameters, arity, domain, range);
     case OP_SLSTAR_POINTSTOR:
-        return m_manager->mk_func_decl(symbol("ptor"), arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+        return mk_pto_func_decl(symbol("ptor"), "TreeLoc", SLSTAR_TREE_LOC, 2, k, num_parameters, parameters, arity, domain, range);
     case OP_SLSTAR_POINTSTOLR:
-        return m_manager->mk_func_decl(symbol("ptolr"), arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+        return mk_pto_func_decl(symbol("ptolr"), "TreeLoc", SLSTAR_TREE_LOC, 3, k, num_parameters, parameters, arity, domain, range);
     case OP_SLSTAR_POINTSTON:
-        return m_manager->mk_func_decl(symbol("pton"), arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+        return mk_pto_func_decl(symbol("pton"), "ListLoc", SLSTAR_LIST_LOC, 2, k, num_parameters, parameters, arity, domain, range);
     case OP_SLSTAR_POINTSTOD:
-        return m_manager->mk_func_decl(symbol("ptod"), arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+        //TODOsl DataSort check
+        return mk_pto_func_decl(symbol("pton"), "DataLoc", -1, 2, k, num_parameters, parameters, arity, domain, range);
+    
     case OP_SLSTAR_TREE:
-        return m_manager->mk_func_decl(symbol("tree"), arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+        return mk_pred_func_decl(symbol("tree"), "TreeLoc", SLSTAR_TREE_LOC, k, num_parameters, parameters, arity, domain, range);
     case OP_SLSTAR_LIST:
-        return m_manager->mk_func_decl(symbol("list"), arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+        return mk_pred_func_decl(symbol("list"), "ListLoc", SLSTAR_LIST_LOC, k, num_parameters, parameters, arity, domain, range);
     default:
         m_manager->raise_exception("unsupported separation logic operator");
         return nullptr;
@@ -142,10 +191,14 @@ void slstar_decl_plugin::set_manager(ast_manager * m, family_id id) {
     m_int_sort = m_manager->mk_sort(m_arith_fid, INT_SORT);
     SASSERT(m_int_sort != 0); // arith_decl_plugin must be installed before fpa_decl_plugin.
     m_manager->inc_ref(m_int_sort);
+
+    m_dpred_sort = m_manager->mk_uninterpreted_sort(symbol("Dpred"));
+    m_manager->inc_ref(m_dpred_sort);
 }
 
 void slstar_decl_plugin::finalize() {
     if (m_int_sort)  { m_manager->dec_ref(m_int_sort); }
+    if (m_dpred_sort)  { m_manager->dec_ref(m_dpred_sort); }
 }
 
 slstar_decl_plugin::~slstar_decl_plugin() {

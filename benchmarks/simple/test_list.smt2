@@ -1,3 +1,4 @@
-(declare-const a Tree)
+(declare-const a ListLoc)
 
+(assert (list a))
 (check-sat)
