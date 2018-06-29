@@ -55,8 +55,8 @@ public:
 
     decl_plugin * mk_fresh();
 
-    sort * mk_slstar_tree();
-    sort * mk_slstar_list();
+    sort * mk_slstar_tree(unsigned num_parameters, parameter const * parameters);
+    sort * mk_slstar_list(unsigned num_parameters, parameter const * parameters);
     sort * mk_sort(decl_kind k, unsigned num_parameters, parameter const * parameters) override;
 
     func_decl * mk_func_decl(decl_kind k, unsigned num_parameters, parameter const * parameters,

@@ -13,6 +13,7 @@
             //"args": ["benchmarks/examples-paper/binary-search-tree.smt2"],
             //"args": ["benchmarks/simple/simple_fp.smt2"],
             "args": ["benchmarks/simple/pred_testcases.smt2"],
+            //"args": ["benchmarks/simple/tree_data_parameter_int.smt2"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],

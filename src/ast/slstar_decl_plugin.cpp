@@ -34,29 +34,57 @@ decl_plugin * slstar_decl_plugin::mk_fresh() {
     return alloc(slstar_decl_plugin);
 }
 
-sort * slstar_decl_plugin::mk_slstar_tree() {
-    //TODOsl
-    //parameter ps[0] = { };
+sort * slstar_decl_plugin::mk_slstar_tree(unsigned num_parameters, parameter const * parameters) {
+    parameter const * params;
+
+    if(num_parameters == 1) {
+        if( !parameters[0].is_ast() || !is_sort(parameters[0].get_ast()) ){
+            m_manager->raise_exception("TreeLoc parameter must be sort");
+            return nullptr;
+        }
+        params = parameters;
+    } else if(num_parameters == 0) {
+        params = nullptr;
+    } else {
+        m_manager->raise_exception("TreeLoc must not have more than one parameter");
+        return nullptr;
+    }
+
     sort_size sz;
     sz = sort_size::mk_very_big(); // TODO: refine
-    return m_manager->mk_sort(symbol("TreeLoc"), sort_info(m_family_id, SLSTAR_TREE_LOC, sz, 0, NULL));
+    return m_manager->mk_sort(symbol("TreeLoc"), sort_info(m_family_id, SLSTAR_TREE_LOC, sz, num_parameters, params));
     //return m_manager->mk_sort(symbol("TreeLoc"), sort_info(m_family_id, SLSTAR_TREE_LOC, sz, 0, ps));
 }
 
-sort * slstar_decl_plugin::mk_slstar_list() {
+sort * slstar_decl_plugin::mk_slstar_list(unsigned num_parameters, parameter const * parameters) {
+    parameter const * params;
+
+    if(num_parameters == 1) {
+        if( !parameters[0].is_ast() || !is_sort(parameters[0].get_ast()) ){
+            m_manager->raise_exception("ListLoc parameter must be sort");
+            return nullptr;
+        }
+        params = parameters;
+    } else if(num_parameters == 0) {
+        params = nullptr;
+    } else {
+        m_manager->raise_exception("ListLoc must not have more than one parameter");
+        return nullptr;
+    }
+
     sort_size sz;
     sz = sort_size::mk_very_big(); // TODO: refine
-    return m_manager->mk_sort(symbol("ListLoc"), sort_info(m_family_id, SLSTAR_LIST_LOC, sz, 0, NULL));
+    return m_manager->mk_sort(symbol("ListLoc"), sort_info(m_family_id, SLSTAR_LIST_LOC, sz, num_parameters, params));
 }
 
 sort * slstar_decl_plugin::mk_sort(decl_kind k, unsigned num_parameters, parameter const * parameters) {
     switch (k) {
     case SLSTAR_TREE_LOC:
-        return mk_slstar_tree();
+        return mk_slstar_tree(num_parameters, parameters);
     case SLSTAR_LIST_LOC:
-        return mk_slstar_list();
+        return mk_slstar_list(num_parameters, parameters);
     default:
-        m_manager->raise_exception("unknown separation logic theory sort");
+        m_manager->raise_exception("unknown separation logic theory sort"); 
         return nullptr;
     }
 }
@@ -88,12 +116,15 @@ func_decl * slstar_decl_plugin::mk_data_predicate_decl(symbol name, decl_kind k,
 func_decl * slstar_decl_plugin::mk_pred_func_decl(symbol name, std::string loc, decl_kind loc_k,
                                     decl_kind k, unsigned num_parameters, parameter const * parameters, 
                                     unsigned arity, sort * const * domain, sort * range) {
-    /*sort * data_sort;
-    if(num_parameters == 1 && parameters[0].is_ast() && is_sort(parameters[0].get_ast())) {
+                                        
+    sort * data_sort = nullptr; //TODOsl
+
+    /*if(num_parameters == 1 && parameters[0].is_ast() && is_sort(parameters[0].get_ast())) {
         data_sort = to_sort(parameters[0].get_ast());
     } else {
         data_sort = m_int_sort;
     }*/
+
     unsigned arg_ptr = 0;
     //while( arg_ptr < arity && domain[arg_ptr]->get_id() == m_dpred_sort->get_id()){
     while( arg_ptr < arity && domain[arg_ptr]->is_sort_of(m_dpred_sort->get_family_id(), m_dpred_sort->get_decl_kind())){
@@ -106,8 +137,20 @@ func_decl * slstar_decl_plugin::mk_pred_func_decl(symbol name, std::string loc, 
         return nullptr;
     }
     while( arg_ptr < arity && domain[arg_ptr]->is_sort_of(m_family_id, loc_k)){
+        if(domain[arg_ptr]->get_num_parameters() == 1){
+            parameter p = domain[arg_ptr]->get_parameter(0);
+            if(!p.is_ast()) {
+                m_manager->raise_exception("Locations must be a sort"); //TODOsl better message
+            }
+            if(data_sort == nullptr){
+                data_sort = to_sort( p.get_ast());
+            } else if(!to_sort( p.get_ast())->is_sort_of(data_sort->get_family_id(), data_sort->get_decl_kind())){
+                m_manager->raise_exception("Locations must use same data sort"); //TODOsl better message
+            }
+        }
         arg_ptr++;
     }
+    
     if(arg_ptr != arity) {
         msg= "invalid argument sort(s). Expected: (" + std::string(name.bare_str()) + " Dpred*, " + loc + "+) ";
         m_manager->raise_exception(msg.c_str());
@@ -171,7 +214,7 @@ func_decl * slstar_decl_plugin::mk_func_decl(decl_kind k, unsigned num_parameter
         return mk_pto_func_decl(symbol("pton"), "ListLoc", SLSTAR_LIST_LOC, 2, k, num_parameters, parameters, arity, domain, range);
     case OP_SLSTAR_POINTSTOD:
         //TODOsl DataSort check
-        return mk_pto_func_decl(symbol("pton"), "DataLoc", -1, 2, k, num_parameters, parameters, arity, domain, range);
+        return mk_pto_func_decl(symbol("ptod"), "DataLoc", -1, 2, k, num_parameters, parameters, arity, domain, range);
     
     case OP_SLSTAR_TREE:
         return mk_pred_func_decl(symbol("tree"), "TreeLoc", SLSTAR_TREE_LOC, k, num_parameters, parameters, arity, domain, range);
