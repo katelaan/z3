@@ -21,27 +21,28 @@
 (declare-const x BV)
 (declare-const y Int)
 
-(assert (tree (unary (+ alpha beta)) t) ) ;will fail function is not bool
-(assert (tree t t t t (unary (+ alpha beta)) ) ) ;will fail dpred at the end
+(assert (tree (unary (+ alpha beta)) t) ) ;will fail function is not bool TODOsl currently ok
+(assert (tree t t t t (unary (> alpha beta)) ) ) ;will fail dpred at the end
 (assert (tree t t t t ) ) ;correct
 (assert (tree t ) ) ;correct
-(assert (tree (unary (+ alpha beta)) (unary (+ alpha beta)) (left (+ alpha beta)) t t t t ) ) ;correct
-(assert (tree (unary (+ alpha beta)) (unary (+ alpha beta)) (left (+ alpha beta)) t t t t 2 ) ) ;will fail, Int at end
-(assert (tree (unary (+ alpha beta)) (unary (+ alpha beta)) (left (+ alpha beta)) t t 2 t t ) ) ;will fail, Int in between
+(assert (tree (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) t t t t ) ) ;correct
+(assert (tree (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) t t t t 2 ) ) ;will fail, Int at end
+(assert (tree (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) t t 2 t t ) ) ;will fail, Int in between
 (assert tree ) ; will fail no arguments
-(assert (tree (unary (+ alpha beta)) )) ; will fail no tree loc
-(assert (tree (next (+ alpha beta)) t )) ; invalid dpred for tree but syntax correct
+(assert (tree (unary (> alpha beta)) )) ; will fail no tree loc
+(assert (tree (next (> alpha beta)) t )) ; invalid dpred for tree but syntax correct
 
-(assert (list (unary (+ alpha beta)) l) ) ;will fail function is not bool
-(assert (list l l l l (unary (+ alpha beta)) ) ) ;will fail dpred at the end
+(assert (list (unary (+ alpha beta)) l) ) ;will fail function is not bool  TODOsl currently ok
+(assert (list (next (+ alpha beta)) l )) ;will fail function is not bool  TODOsl currently ok
+(assert (list l l l l (unary (> alpha beta)) ) ) ;will fail dpred at the end
 (assert (list l l l l ) ) ;correct
 (assert (list l ) ) ;correct
-(assert (list (unary (+ alpha beta)) (unary (+ alpha beta)) (left (+ alpha beta)) l l l l ) ) ;correct
-(assert (list (unary (+ alpha beta)) (unary (+ alpha beta)) (left (+ alpha beta)) l l l l 2 ) ) ;will fail, Int at end
-(assert (list (unary (+ alpha beta)) (unary (+ alpha beta)) (left (+ alpha beta)) l l 2 l l ) ) ;will fail, Int in between
+(assert (list (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) l l l l ) ) ;correct
+(assert (list (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) l l l l 2 ) ) ;will fail, Int at end
+(assert (list (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) l l 2 l l ) ) ;will fail, Int in between
 (assert list ) ; will fail no arguments
-(assert (list (unary (+ alpha beta)) )) ; will fail no list loc
-(assert (list (next (+ alpha beta)) l )) ; invalid dpred for list but syntax correct
+(assert (list (unary (> alpha beta)) )) ; will fail no list loc
+(assert (list (next (> alpha beta)) l )) ; invalid dpred for list but syntax correct
 
 (assert (pton l l)) ; correct
 (assert (pton l)) ; fail only one arg
@@ -67,6 +68,9 @@
 
 (assert (ptod tint1 x)) ; correct
 (assert (ptod tint2 x)) ; correct
+(assert (ptod lint1 x)) ; correct
+(assert (ptod lint2 x)) ; correct
+(assert (ptod x tint1)) ; fail 1st argument must be Tree or ListLoc
 
 (assert (tree l)) ; fail tree uses ListLoc
 (assert (list t)) ; fail list uses TreeLoc
