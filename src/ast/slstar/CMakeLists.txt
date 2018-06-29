@@ -1,0 +1,14 @@
+z3_add_component(slstar
+  SOURCES
+    slstar_converter.cpp
+    slstar_rewriter.cpp
+    #[[fpa2bv_converter.cpp
+    fpa2bv_rewriter.cpp]]
+  COMPONENT_DEPENDENCIES
+    ast
+    rewriter
+    model
+    util
+  PYG_FILES
+    #[[fpa2bv_rewriter_params.pyg]]
+)

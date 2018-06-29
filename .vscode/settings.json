@@ -11,6 +11,8 @@
         "istream": "cpp",
         "tuple": "cpp",
         "utility": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "bitset": "cpp",
+        "initializer_list": "cpp"
     }
 }

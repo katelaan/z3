@@ -10,6 +10,7 @@ z3_add_component(portfolio
     aig_tactic
     fp
     fpa_tactics
+    slstar_tactics
     qe
     sat_solver
     sls_tactic
