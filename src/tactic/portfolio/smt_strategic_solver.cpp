@@ -36,6 +36,7 @@ Notes:
 #include "tactic/portfolio/fd_solver.h"
 #include "tactic/ufbv/ufbv_tactic.h"
 #include "tactic/fpa/qffp_tactic.h"
+#include "tactic/slstar/slstar_reduce_tactic.h"
 #include "tactic/smtlogics/qfufnra_tactic.h"
 #include "muz/fp/horn_tactic.h"
 #include "smt/smt_solver.h"
@@ -93,6 +94,8 @@ tactic * mk_tactic_for_logic(ast_manager & m, params_ref const & p, symbol const
         return mk_qffpbv_tactic(m, p);
     else if (logic=="HORN")
         return mk_horn_tactic(m, p);
+    else if (logic=="SLSTAR")
+        return mk_slstar_reduce_tactic(m, p);
     else if ((logic == "QF_FD" || logic == "SAT") && !m.proofs_enabled())
         return mk_solver2tactic(mk_fd_solver(m, p));
     //else if (logic=="QF_UFNRA")

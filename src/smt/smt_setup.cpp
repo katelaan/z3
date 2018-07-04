@@ -195,12 +195,13 @@ namespace smt {
             else if (m_logic == "QF_DT")
                 setup_QF_DT();
             else if (m_logic == "LRA")
-                setup_LRA();
+                setup_LRA();            
+            else if (m_logic == "SLSTAR")
+                setup_SLSTAR(st);
             else 
                 setup_unknown(st);
         }
     }
-
     static void check_no_arithmetic(static_features const & st, char const * logic) {
         if (st.m_num_arith_ineqs > 0 || st.m_num_arith_terms > 0 || st.m_num_arith_eqs > 0) 
             throw default_exception("Benchmark constains arithmetic, but specified loging does not support it.");
@@ -702,6 +703,12 @@ namespace smt {
 
     void setup::setup_AUFNIRA() {
         setup_AUFLIRA();
+    }
+
+
+    void setup::setup_SLSTAR(static_features & st) {
+        //TODOsl
+        setup_unknown(st);
     }
 
     void setup::setup_LRA() {

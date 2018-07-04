@@ -86,6 +86,7 @@ bool smt_logics::logic_has_arith(symbol const & s) {
         s == "ALL" ||
         s == "QF_FD" ||
         s == "HORN" ||
+        s == "SLSTAR" ||
         s == "QF_FPLRA";
 }
 
@@ -104,7 +105,8 @@ bool smt_logics::logic_has_bv(symbol const & s) {
         s == "QF_BVFP" ||
         s == "ALL" ||
         s == "QF_FD" ||
-        s == "HORN";
+        s == "HORN" ||
+        s == "SLSTAR";
 }
 
 bool smt_logics::logic_has_array(symbol const & s) {
@@ -126,7 +128,8 @@ bool smt_logics::logic_has_array(symbol const & s) {
         s == "ALL" ||
         s == "QF_ABV" ||
         s == "QF_AUFBV" ||
-        s == "HORN";
+        s == "HORN" ||
+        s == "SLSTAR";
 }
 
 bool smt_logics::logic_has_seq(symbol const & s) {

@@ -196,6 +196,14 @@ struct check_logic::imp {
             m_dt          = true;
             m_nonlinear   = true; // non-linear 0-1 variables may get eliminated
         }
+        else if (logic == "SLSTAR") {
+            m_uf          = true;
+            m_bvs         = true;
+            m_ints        = true;
+            m_arrays      = true;
+            m_reals       = true;
+            m_quantifiers = false;
+        }
         else {
             m_unknown_logic = true;
         }
