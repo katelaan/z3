@@ -27,6 +27,8 @@ struct slstar_rewriter_cfg : public default_rewriter_cfg {
     void cleanup_buffers() {
         m_out.finalize();
     }
+
+    br_status reduce_app(func_decl * f, unsigned num, expr * const * args, expr_ref & result, proof_ref & result_pr);
 };
 
 struct slstar_rewriter : public rewriter_tpl<slstar_rewriter_cfg> {
