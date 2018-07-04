@@ -196,6 +196,10 @@ probe * mk_is_slstar_probe() {
     return alloc(is_slstar_probe);
 }
 
+tactic * mk_slstar_tactic(ast_manager & m, params_ref const & p) {
+    return clean(alloc(slstar_tactic, m, p));
+}
+
 tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
     params_ref simp_p = p;
     simp_p.set_bool("arith_lhs", true);
@@ -203,7 +207,7 @@ tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
 
     tactic * preamble = and_then(mk_simplify_tactic(m, simp_p),
                                  mk_propagate_values_tactic(m, p),
-                                 mk_slstar_reduce_tactic(m, p),
+                                 mk_slstar_tactic(m, p),
                                  mk_propagate_values_tactic(m, p),
                                  using_params(mk_simplify_tactic(m, p), simp_p),
                                  if_no_proofs(if_no_unsat_cores(mk_ackermannize_bv_tactic(m, p))));

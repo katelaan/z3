@@ -11,4 +11,4 @@
 (check-sat)
 (get-model)
 
-(check-sat-assuming ((not a)) )
+(check-sat-assuming (a) )

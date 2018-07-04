@@ -10,7 +10,6 @@
             },
             "includePath": [
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/build/src",
                 "/usr/include",
                 "/usr/local/include"
             ],

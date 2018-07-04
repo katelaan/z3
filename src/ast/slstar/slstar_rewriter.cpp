@@ -1,5 +1,6 @@
+#include "ast/rewriter/rewriter_def.h"
 #include "ast/slstar/slstar_rewriter.h"
-
+#include "util/cooperate.h"
 
 slstar_rewriter_cfg::slstar_rewriter_cfg(ast_manager & m, slstar_converter & c, params_ref const & p) :
     m_manager(m),
@@ -20,3 +21,5 @@ void slstar_rewriter_cfg::updt_params(params_ref const & p) {
 void slstar_rewriter_cfg::updt_local_params(params_ref const & _p) {
     /* nothing yet */
 }
+
+template class rewriter_tpl<slstar_rewriter_cfg>;

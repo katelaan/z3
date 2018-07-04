@@ -21,6 +21,12 @@ struct slstar_rewriter_cfg : public default_rewriter_cfg {
 
     void updt_params(params_ref const & p);
 
+    void reset(){
+    }
+
+    void cleanup_buffers() {
+        m_out.finalize();
+    }
 };
 
 struct slstar_rewriter : public rewriter_tpl<slstar_rewriter_cfg> {
