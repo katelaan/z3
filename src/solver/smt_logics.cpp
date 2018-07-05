@@ -132,6 +132,10 @@ bool smt_logics::logic_has_array(symbol const & s) {
         s == "SLSTAR";
 }
 
+bool smt_logics::logic_has_slstar(symbol const & s) {
+    return s == "SLSTAR";
+}
+
 bool smt_logics::logic_has_seq(symbol const & s) {
     return s == "QF_BVRE" || s == "QF_S" || s == "ALL";
 }

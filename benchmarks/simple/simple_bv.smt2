@@ -6,7 +6,8 @@
 
 (assert (= a #b00))
 (assert (= b #b10))
-(assert (= c (bvor a b)))
+;(assert (= c (bvor a b)))
+(assert (bvult b c))
 
 (check-sat)
 (get-model)

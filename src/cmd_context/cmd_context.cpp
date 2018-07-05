@@ -672,8 +672,7 @@ bool cmd_context::logic_has_fpa() const {
 }
 
 bool cmd_context::logic_has_slstar() const {
-    //return !has_logic() || smt_logics::logic_has_fpa(m_logic); TODOsl
-    return !has_logic();
+    return !has_logic() || smt_logics::logic_has_slstar(m_logic);
 }
 
 bool cmd_context::logic_has_array() const {

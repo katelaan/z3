@@ -1,3 +1,5 @@
+(set-logic QF_FPBV)
+
 (declare-const a (_ FloatingPoint 2 3) )
 (declare-const b (_ FloatingPoint 2 3) )
 (declare-const c (_ FloatingPoint 2 3) )

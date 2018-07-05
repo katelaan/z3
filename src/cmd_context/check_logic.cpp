@@ -20,6 +20,7 @@ Revision History:
 #include "ast/arith_decl_plugin.h"
 #include "ast/array_decl_plugin.h"
 #include "ast/bv_decl_plugin.h"
+#include "ast/slstar_decl_plugin.h"
 #include "ast/seq_decl_plugin.h"
 #include "ast/pb_decl_plugin.h"
 #include "ast/datatype_decl_plugin.h"
@@ -36,6 +37,7 @@ struct check_logic::imp {
     seq_util      m_seq_util;
     datatype_util m_dt_util;
     pb_util       m_pb_util;
+    slstar_util   m_sl_util;
     bool          m_uf;        // true if the logic supports uninterpreted functions
     bool          m_dt;        // true if the lgoic supports dattypes
     bool          m_arrays;    // true if the logic supports arbitrary arrays
@@ -48,7 +50,7 @@ struct check_logic::imp {
     bool          m_quantifiers; // true if the logic supports quantifiers
     bool          m_unknown_logic;
 
-    imp(ast_manager & _m):m(_m), m_a_util(m), m_bv_util(m), m_ar_util(m), m_seq_util(m), m_dt_util(m), m_pb_util(m) {
+    imp(ast_manager & _m):m(_m), m_a_util(m), m_bv_util(m), m_ar_util(m), m_seq_util(m), m_dt_util(m), m_pb_util(m), m_sl_util(m) {
         reset();
     }
 
@@ -436,6 +438,9 @@ struct check_logic::imp {
             }
         }
         else if (fid == m_bv_util.get_family_id()) {
+            // nothing to check...
+        }
+        else if (fid == m_sl_util.get_family_id()) {
             // nothing to check...
         }
         else if (fid == m_ar_util.get_family_id()) {

@@ -257,3 +257,13 @@ void slstar_decl_plugin::finalize() {
 
 slstar_decl_plugin::~slstar_decl_plugin() {
 }
+
+slstar_util::slstar_util(ast_manager & m) :
+    m_manager(m),
+    m_fid(m.mk_family_id("slstar"))
+{
+    m_plugin = static_cast<slstar_decl_plugin*>(m.get_plugin(m_fid));
+}
+
+slstar_util::~slstar_util() {
+}

@@ -74,4 +74,17 @@ public:
     void finalize() override;
 };
 
+class slstar_util {
+    ast_manager        & m_manager;
+    slstar_decl_plugin * m_plugin;
+    family_id          m_fid;
+public:
+    slstar_util(ast_manager & m);
+    ~slstar_util();
+
+    ast_manager & m() const { return m_manager; }
+    family_id get_fid() const { return m_fid; }
+    family_id get_family_id() const { return m_fid; }
+};
+
 #endif //slstar_decl_plugin_H_
