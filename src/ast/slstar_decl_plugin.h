@@ -1,6 +1,7 @@
 #ifndef slstar_decl_plugin_H_
 #define slstar_decl_plugin_H_
 
+#include <list>
 #include "ast/ast.h"
 #include "util/id_gen.h"
 #include "ast/arith_decl_plugin.h"
@@ -85,6 +86,23 @@ public:
     ast_manager & m() const { return m_manager; }
     family_id get_fid() const { return m_fid; }
     family_id get_family_id() const { return m_fid; }
+
+     void get_spatial_atoms(std::list<expr*> * atoms, expr * ex);
+
+     bool is_pto(expr const * ex);
+     bool is_ptor(expr const * ex);
+     bool is_ptol(expr const * ex);
+     bool is_pton(expr const * ex);
+     bool is_ptod(expr const * ex);
+     
+     bool is_sep(expr const * ex);
+
+     bool is_call(expr const * ex);
+     bool is_tree(expr const * ex);
+     bool is_list(expr const * ex);
+
+     bool is_listloc(sort const * s);
+     bool is_treeloc(sort const * s);
 };
 
 #endif //slstar_decl_plugin_H_

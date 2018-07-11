@@ -17,8 +17,9 @@ class slstar_converter {
 
 protected:
     ast_manager              & m;
+    slstar_util              & util;
 public:
-    slstar_converter(ast_manager & m);
+    slstar_converter(ast_manager & m, slstar_util & util);
     ~slstar_converter();
 };
 

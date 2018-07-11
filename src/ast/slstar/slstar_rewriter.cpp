@@ -25,7 +25,16 @@ void slstar_rewriter_cfg::updt_local_params(params_ref const & _p) {
 br_status slstar_rewriter_cfg::reduce_app(func_decl * f, unsigned num, expr * const * args, expr_ref & result, proof_ref & result_pr) {
     TRACE("slstar_rw", tout << "func: " << f->get_name() << std::endl;
                        tout << "args: " << std::endl;);
-    return default_rewriter_cfg::reduce_app(f, num, args, result, result_pr);
+    
+    switch(f->get_decl_kind()) {
+        case OP_SLSTAR_LIST:
+            result = m_manager.mk_true();
+            return BR_DONE;
+        case OP_SLSTAR_ALPHA:
+        case OP_SLSTAR_BETA:
+        default:
+            return default_rewriter_cfg::reduce_app(f, num, args, result, result_pr);
+    }
 }
 
 template class rewriter_tpl<slstar_rewriter_cfg>;

@@ -1,4 +1,5 @@
 #include "ast/slstar_decl_plugin.h"
+
 void slstar_decl_plugin::get_op_names(svector<builtin_name> & op_names, symbol const & logic) {
     //Const.
     op_names.push_back(builtin_name("null", OP_SLSTAR_NULL));
@@ -266,4 +267,62 @@ slstar_util::slstar_util(ast_manager & m) :
 }
 
 slstar_util::~slstar_util() {
+}
+
+void slstar_util::get_spatial_atoms(std::list<expr*> * atoms, expr * ex) {
+    if(ex->get_kind() != AST_APP ) {
+        return; //TODOsl SASSERT?
+    }
+    app * t = to_app(ex);
+
+    // further explore formulas and spatial formulas
+    if(m_manager.is_and(t) 
+      || m_manager.is_not(t) 
+      || m_manager.is_or(t)
+      || is_sep(t)
+    ){
+        expr * arg;
+        for(unsigned int i=0; i<t->get_num_args(); i++){
+            arg = t->get_arg(i);
+            get_spatial_atoms(atoms, arg);
+        }
+    }
+    atoms->push_back(ex);
+}
+
+bool slstar_util::is_pto(expr const * ex)  {
+    return is_ptor(ex) || is_ptol(ex) || is_pton(ex) || is_ptod(ex);
+}
+bool slstar_util::is_ptor(expr const * ex) {
+    return is_app_of(ex, m_fid, OP_SLSTAR_POINTSTOR);
+}
+bool slstar_util::is_ptol(expr const * ex) {
+    return is_app_of(ex, m_fid, OP_SLSTAR_POINTSTOL);
+}
+bool slstar_util::is_pton(expr const * ex) {
+    return is_app_of(ex, m_fid, OP_SLSTAR_POINTSTON);
+}
+bool slstar_util::is_ptod(expr const * ex) {
+    return is_app_of(ex, m_fid, OP_SLSTAR_POINTSTOD);
+}
+
+bool slstar_util::is_sep(expr const * ex)  {
+    return is_app_of(ex, m_fid, OP_SLSTAR_SEP);
+}
+
+bool slstar_util::is_call(expr const * ex)  {
+    return is_tree(ex) || is_list(ex);
+}
+bool slstar_util::is_tree(expr const * ex) {
+    return is_app_of(ex, m_fid, OP_SLSTAR_TREE);
+}
+bool slstar_util::is_list(expr const * ex) {
+    return is_app_of(ex, m_fid, OP_SLSTAR_LIST);
+}
+
+bool slstar_util::is_treeloc(sort const * s){
+    return s->is_sort_of(m_fid, SLSTAR_TREE_LOC);
+}
+bool slstar_util::is_listloc(sort const * s){
+    return s->is_sort_of(m_fid, SLSTAR_LIST_LOC);
 }

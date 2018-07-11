@@ -41,5 +41,6 @@
         "streambuf": "cpp",
         "cinttypes": "cpp",
         "type_traits": "cpp"
-    }
+    },
+    "C_Cpp.intelliSenseEngineFallback": "Disabled"
 }

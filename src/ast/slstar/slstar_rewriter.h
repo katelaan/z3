@@ -21,14 +21,28 @@ struct slstar_rewriter_cfg : public default_rewriter_cfg {
 
     void updt_params(params_ref const & p);
 
+    //bool cache_all_results() const;
+    //bool cache_results() const;
+    //bool flat_assoc(func_decl * f) const { return true; } // '(sep (sep a b) c)' should be treated as '(sep a b c)' TODOsl: how to set sep as associative?
+    //bool rewrite_patterns() const;
+    //bool max_scopes_exceeded(unsigned num_scopes) const;
+    //bool max_frames_exceeded(unsigned num_frames) const;
+    //bool max_steps_exceeded(unsigned num_steps) const;
+    //bool pre_visit(expr * t);
+    br_status reduce_app(func_decl * f, unsigned num, expr * const * args, expr_ref & result, proof_ref & result_pr);
+    //bool reduce_quantifier(quantifier * old_q, 
+    //                       expr * new_body, 
+    //                       expr * const * new_patterns, 
+    //                       expr * const * new_no_patterns,
+    //                       expr_ref & result,
+    //                       proof_ref & result_pr);
+    //bool get_macro(func_decl * d, expr * & def, quantifier * & q, proof * & def_pr);
+    //bool get_subst(expr * s, expr * & t, proof * & t_pr);
+
     void reset(){
     }
-
-    void cleanup_buffers() {
-        m_out.finalize();
+    void cleanup(){
     }
-
-    br_status reduce_app(func_decl * f, unsigned num, expr * const * args, expr_ref & result, proof_ref & result_pr);
 };
 
 struct slstar_rewriter : public rewriter_tpl<slstar_rewriter_cfg> {

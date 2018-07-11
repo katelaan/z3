@@ -8,13 +8,35 @@
 #include "tactic/arith/probe_arith.h"
 #include "tactic/smtlogics/qfnra_tactic.h"
 
+#include "ast/slstar_decl_plugin.h"
 #include "ast/slstar/slstar_rewriter.h"
 #include "ast/slstar/slstar_converter.h"
 #include "tactic/slstar/slstar_reduce_tactic.h"
 
+#include <set>
+
 class slstar_tactic : public tactic {
+    struct bounds {
+        int m_list = -1;
+        int m_tree = -1;
+        int n_list = -1;
+        int n_tree = -1;
+
+        bool is_def() {
+            return (m_list != -1) && (n_list != -1) && (m_list != -1) && (n_list != -1);
+        }
+
+        void define() {
+            m_list = 0;
+            m_tree = 0;
+            n_list = 0;
+            n_tree = 0;
+        }
+    };
+
     struct imp {
         ast_manager &     m;
+        slstar_util       util;
         slstar_converter  m_conv;
         slstar_rewriter   m_rw;
         unsigned          m_num_steps;
@@ -25,7 +47,8 @@ class slstar_tactic : public tactic {
 
         imp(ast_manager & _m, params_ref const & p):
             m(_m),
-            m_conv(m),
+            util(m),
+            m_conv(m, util),
             m_rw(m, m_conv, p),
             m_proofs_enabled(false),
             m_produce_models(false),
@@ -34,6 +57,100 @@ class slstar_tactic : public tactic {
 
         void updt_params(params_ref const & p) {
             m_rw.cfg().updt_params(p);
+        }
+
+        bounds calc_bounds(goal_ref const & g) {
+            bounds ret = noncall_conjunct_bounds(g);
+            if( !ret.is_def() ) {
+                // compute normal bounds
+            }
+            return ret;
+        }
+ 
+        bounds noncall_conjunct_bounds(goal_ref const & g) {
+            bounds ret;
+            expr * conj;
+            // Each top level assertion is a conjunct
+            // if one of them is free of predicate calls (tree/list) it implicitly gives us the bound
+            for (unsigned int i = 0; i < g->size(); i++) {
+                conj = g->form(i);
+                if(noncall_conjunct_bounds(conj,conj)){
+                    if(conj != nullptr) {
+                        //calculate ret
+                        count_src_symbols(conj, &ret);
+                        return ret; //TODOsl possible opt. minimum, all bounds must be equal or it's unsat
+                    }
+                }
+            }
+            
+            return ret;
+        }
+
+        void count_src_symbols(expr * ex, bounds * ret){
+            std::set<std::string> alloced_const;
+
+            ret->define();
+
+            std::list<expr*> atoms;
+            util.get_spatial_atoms(&atoms,ex);
+
+            for(auto it = atoms.begin(); it != atoms.end(); it++){
+                SASSERT(!util.is_call(*it));
+                if(util.is_pto(*it)) {
+                    app * t = to_app(*it);
+                    SASSERT( t->get_num_args() >= 1 );
+                    expr * src = t->get_arg(0);
+                    SASSERT( is_app(src) );
+                    func_decl * d = to_app(src)->get_decl();
+                    // for each unique allocated constant increment bound by location sort
+                    if(alloced_const.find(d->get_name().str()) == alloced_const.end() ){
+                        alloced_const.insert( d->get_name().str() );
+                        if(util.is_listloc(get_sort(src))){
+                            ret->n_list++;
+                        } else if(util.is_treeloc(get_sort(src))) {
+                            ret->n_tree++;
+                        } else {
+                            SASSERT(false);
+                        }
+                    }
+                }
+            }
+        }
+
+        bool noncall_conjunct_bounds(expr * in, expr *& out ) {
+            if(in->get_kind() != AST_APP )
+                return false;
+            app * t = to_app(in);
+
+            // ignore negations and disjucts
+            if(m.is_not(t) || m.is_or(t)){
+                return false;
+            }
+            // further explore ands
+            if(m.is_and(t)){
+                expr * conj;
+                for(unsigned int i=0; i<t->get_num_args(); i++){
+                    conj = t->get_arg(i);
+                    if(noncall_conjunct_bounds(conj,out) && out != nullptr){
+                        return true;
+                    }
+                }
+                out = nullptr;
+                return false;
+            }
+            // in is either spatial atom or spatial form
+            // if one of the spatial atom of the spatial form is a call, ignore (i.e. reuturn true and nullptr) ...
+            std::list<expr*> atoms;
+            util.get_spatial_atoms( &atoms, in );
+            for(auto it = atoms.begin(); it != atoms.end(); it++){
+                if(util.is_call(*it)){
+                    out = nullptr;
+                    return true;
+                }
+            }
+            // ... if not use the expr for calculating bound
+            out = in;
+            return true;
         }
 
         void operator()(goal_ref const & g,
@@ -51,6 +168,14 @@ class slstar_tactic : public tactic {
             m_rw.reset();
 
             TRACE("slstar", tout << "BEFORE: " << std::endl; g->display(tout););
+
+            bounds bd = calc_bounds(g);
+
+            TRACE("slstar-bound", tout << "Bounds:" << 
+                " mList " << bd.m_list << 
+                " nList " << bd.n_list << 
+                " mTree " << bd.m_tree << 
+                " nTree " << bd.n_tree << std::endl; );
 
             if (g->inconsistent()) {
                 result.push_back(g.get());
