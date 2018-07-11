@@ -291,13 +291,16 @@ void slstar_util::get_spatial_atoms(std::list<expr*> * atoms, expr * ex) {
 }
 
 bool slstar_util::is_pto(expr const * ex)  {
-    return is_ptor(ex) || is_ptol(ex) || is_pton(ex) || is_ptod(ex);
+    return is_ptolr(ex) || is_ptor(ex) || is_ptol(ex) || is_pton(ex) || is_ptod(ex);
 }
 bool slstar_util::is_ptor(expr const * ex) {
     return is_app_of(ex, m_fid, OP_SLSTAR_POINTSTOR);
 }
 bool slstar_util::is_ptol(expr const * ex) {
     return is_app_of(ex, m_fid, OP_SLSTAR_POINTSTOL);
+}
+bool slstar_util::is_ptolr(expr const * ex) {
+    return is_app_of(ex, m_fid, OP_SLSTAR_POINTSTOLR);
 }
 bool slstar_util::is_pton(expr const * ex) {
     return is_app_of(ex, m_fid, OP_SLSTAR_POINTSTON);

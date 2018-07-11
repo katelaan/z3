@@ -90,6 +90,7 @@ public:
      void get_spatial_atoms(std::list<expr*> * atoms, expr * ex);
 
      bool is_pto(expr const * ex);
+     bool is_ptolr(expr const * ex);
      bool is_ptor(expr const * ex);
      bool is_ptol(expr const * ex);
      bool is_pton(expr const * ex);
