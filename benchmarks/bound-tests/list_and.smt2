@@ -4,7 +4,7 @@
 (declare-const z ListLoc)
 
 (assert 
-  (and  (pton x y) (pton y z) (list y) ) 
+  (and  (pton x y) (pton y z) ) 
 )
 (check-sat)
 
