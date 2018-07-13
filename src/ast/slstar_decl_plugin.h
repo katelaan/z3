@@ -11,7 +11,8 @@
 enum slstar_sort_kind {
     SLSTAR_TREE_LOC,
     SLSTAR_LIST_LOC,
-    SLSTAR_KEYWORD,
+    SLSTAR_NULL_LOC,
+    SLSTAR_DPRED
 };
 
 enum slstar_op_kind {
@@ -39,6 +40,7 @@ class slstar_decl_plugin : public decl_plugin {
 private:
     sort *              m_int_sort;
     sort *              m_dpred_sort;
+    sort *              m_null_sort = nullptr;
 
     func_decl * mk_support_decl(symbol name, decl_kind k, unsigned num_parameters, 
                                     parameter const * parameters, unsigned arity,
@@ -61,6 +63,7 @@ public:
 
     sort * mk_slstar_tree(unsigned num_parameters, parameter const * parameters);
     sort * mk_slstar_list(unsigned num_parameters, parameter const * parameters);
+    sort * mk_slstar_nullsort(unsigned num_parameters, parameter const * parameters);
     sort * mk_sort(decl_kind k, unsigned num_parameters, parameter const * parameters) override;
 
     func_decl * mk_func_decl(decl_kind k, unsigned num_parameters, parameter const * parameters,
@@ -87,23 +90,32 @@ public:
     family_id get_fid() const { return m_fid; }
     family_id get_family_id() const { return m_fid; }
 
-     void get_spatial_atoms(std::list<expr*> * atoms, expr * ex);
+    void get_spatial_atoms(std::list<expr*> * atoms, expr * ex);
+    void get_constants(std::list<expr*> * consts, expr * ex);
 
-     bool is_pto(expr const * ex);
-     bool is_ptolr(expr const * ex);
-     bool is_ptor(expr const * ex);
-     bool is_ptol(expr const * ex);
-     bool is_pton(expr const * ex);
-     bool is_ptod(expr const * ex);
+    bool is_pto(expr const * ex);
+    bool is_ptolr(expr const * ex);
+    bool is_ptor(expr const * ex);
+    bool is_ptol(expr const * ex);
+    bool is_pton(expr const * ex);
+    bool is_ptod(expr const * ex);
      
-     bool is_sep(expr const * ex);
+    bool is_sep(expr const * ex);
 
-     bool is_call(expr const * ex);
-     bool is_tree(expr const * ex);
-     bool is_list(expr const * ex);
+    bool is_call(expr const * ex);
+    bool is_tree(expr const * ex);
+    bool is_list(expr const * ex);
 
-     bool is_listloc(sort const * s);
-     bool is_treeloc(sort const * s);
+    bool is_listconst(expr const * ex);
+    bool is_treeconst(expr const * ex);
+    bool is_null(expr const * ex);
+
+    bool is_listloc(sort const * s);
+    bool is_treeloc(sort const * s);
+    bool is_nullloc(sort const * s);
+    bool is_dpred(sort const * s);
+
+    unsigned int num_stop_nodes(expr const * t);
 };
 
 #endif //slstar_decl_plugin_H_

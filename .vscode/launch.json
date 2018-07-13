@@ -17,7 +17,7 @@
             //"args": ["benchmarks/simple/simple_bv.smt2"],
             //"args": ["benchmarks/unsat/list-not-list.smt2"],
             //"args": ["benchmarks/simple/test_list.smt2"],
-            "args": ["benchmarks/bound-tests/list_and4.smt2"],
+            "args": ["benchmarks/bound-tests/list_sep_list.smt2"],
             //"args": ["benchmarks/simple/pred_testcases.smt2"],
             //"args": ["benchmarks/simple/tree_data_parameter_int.smt2"],
             "stopAtEntry": true,
@@ -32,6 +32,15 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+
+        {
+            "name": "Python: Runtests",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/runtest.py",
+            "args": ["${workspaceFolder}/testdef/testdef.txt"],
+            "cwd": "${workspaceFolder}/testdef"
         }
     ]
 }

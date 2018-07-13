@@ -15,20 +15,19 @@
 
 #include <set>
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+
 class slstar_tactic : public tactic {
     struct bounds {
-        int m_list = -1;
-        int m_tree = -1;
         int n_list = -1;
         int n_tree = -1;
 
         bool is_def() {
-            return (m_list != -1) && (n_list != -1) && (m_list != -1) && (n_list != -1);
+            return (n_list != -1) && (n_tree != -1);
         }
 
         void define() {
-            m_list = 0;
-            m_tree = 0;
             n_list = 0;
             n_tree = 0;
         }
@@ -63,6 +62,8 @@ class slstar_tactic : public tactic {
             bounds ret = noncall_conjunct_bounds(g);
             if( !ret.is_def() ) {
                 // compute normal bounds
+                ret.define();
+                calc_nondata_bounds(g, ret);
             }
             return ret;
         }
@@ -84,6 +85,90 @@ class slstar_tactic : public tactic {
             }
             
             return ret;
+        }
+
+        void calc_nondata_bounds(goal_ref const & g, bounds & ret) {
+            for (unsigned int i = 0; i < g->size(); i++) {
+                expr * ex = g->form(i);
+                SASSERT(is_app(ex));
+                app * t = to_app(ex);
+                bounds tmp;
+                tmp.define();
+                calc_nondata_bounds(tmp, t);
+                calc_bounds_max(ret, tmp);
+            }
+        }
+
+        void calc_bounds_max(bounds & a_ret, bounds & b) {
+            a_ret.n_list = MAX(a_ret.n_list, b.n_list);
+            a_ret.n_tree = MAX(a_ret.n_tree, b.n_tree);
+        }
+
+        void calc_nondata_bounds(bounds & ret, app * t) {
+            if(m.is_and(t) || m.is_or(t) || m.is_not(t)){
+                calc_nondata_bounds_non_spatial(ret,t);
+            } else {
+                calc_nondata_bounds_spatial(ret,t);
+            }
+        }
+
+        void calc_nondata_bounds_non_spatial(bounds & ret, app * t) {
+            expr * arg;
+            for(unsigned int i=0; i<t->get_num_args(); i++){
+                arg = t->get_arg(i);
+                SASSERT(is_app(arg));
+                app * argt = to_app(arg);
+                bounds tmp;
+                tmp.define();
+                calc_nondata_bounds(tmp, argt);
+                calc_bounds_max(ret, tmp);
+            }
+        }
+
+        void calc_nondata_bounds_spatial(bounds & ret, app * t) {
+
+
+            std::list<expr*> consts;
+            util.get_constants(&consts, t);
+            count_non_null_const(ret, consts);
+
+            std::list<expr*> atoms;
+            util.get_spatial_atoms(&atoms,t);
+            for(auto it = atoms.begin(); it != atoms.end(); it++){
+                if(util.is_call(*it)) {
+                    if(util.is_list(*it)) {
+                        ret.n_list += 1;
+                    }
+                    else if(util.is_tree(*it)) {
+                        ret.n_tree += 1 + util.num_stop_nodes(*it);
+                    } else {
+                        SASSERT(false); // not supported
+                    }
+                }
+            }
+        }
+
+        void count_non_null_const(bounds & ret, std::list<expr*> & consts) {
+            std::set<std::string> tconst;
+            std::set<std::string> lconst;
+
+            for(auto it = consts.begin(); it != consts.end(); it++){
+                SASSERT( is_app(*it));
+                app * t = to_app(*it);
+                func_decl * d = to_app(t)->get_decl();
+
+                if(util.is_listconst(*it)){
+                    if(lconst.find(d->get_name().str()) == lconst.end() ){
+                        lconst.insert( d->get_name().str() );
+                        ret.n_list++;
+                    }
+                } else if (util.is_treeconst(*it)) {
+                    if(tconst.find(d->get_name().str()) == tconst.end() ){
+                        tconst.insert( d->get_name().str() );
+                        ret.n_tree++;
+                    }
+                }
+            }
         }
 
         void count_src_symbols(expr * ex, bounds * ret){
@@ -109,6 +194,8 @@ class slstar_tactic : public tactic {
                             ret->n_list++;
                         } else if(util.is_treeloc(get_sort(src))) {
                             ret->n_tree++;
+                        } else if(util.is_null(src)){
+                            // ignore // TODOsl
                         } else {
                             SASSERT(false);
                         }
@@ -172,9 +259,7 @@ class slstar_tactic : public tactic {
             bounds bd = calc_bounds(g);
 
             TRACE("slstar-bound", tout << "Bounds:" << 
-                " mList " << bd.m_list << 
                 " nList " << bd.n_list << 
-                " mTree " << bd.m_tree << 
                 " nTree " << bd.n_tree << std::endl; );
 
             if (g->inconsistent()) {

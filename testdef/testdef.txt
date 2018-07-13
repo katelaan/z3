@@ -1,0 +1,36 @@
+Bounds1 ../benchmarks/bound-tests/list_and.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 1;nTree 0;
+sat
+Bounds2 ../benchmarks/bound-tests/list_and2.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 1;nTree 0;
+sat
+Bounds3 ../benchmarks/bound-tests/list_and3.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 1;nTree 0;
+sat
+Bounds4 ../benchmarks/bound-tests/list_and4.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 2;nTree 0;
+sat
+Bounds5 ../benchmarks/bound-tests/list_and5.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 3;nTree 0;
+sat
+Bounds6 ../benchmarks/bound-tests/tree_ptod.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 0;nTree 3;
+sat
+Bounds7 ../benchmarks/bound-tests/tree_ptol_ptor.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 0;nTree 3;
+sat
+Bounds8 ../benchmarks/bound-tests/tree_ptolr.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 0;nTree 3;
+sat
+Bounds9 ../benchmarks/bound-tests/list_sep_list.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 6;nTree 0;
+sat
+Bounds10 ../benchmarks/bound-tests/list_sep_pton.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 5;nTree 0;
+sat
+Bounds11 ../benchmarks/bound-tests/tree.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 0;nTree 4;
+sat
+Bounds12 ../benchmarks/bound-tests/tree_stops.smt2
+  slstar-bound Bounds: (nList [0-9]+) (nTree [0-9]+);nList 0;nTree 6;
+sat

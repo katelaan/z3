@@ -25,6 +25,8 @@
 (assert (tree t t t t (unary (> alpha beta)) ) ) ;will fail dpred at the end
 (assert (tree t t t t ) ) ;correct
 (assert (tree t ) ) ;correct
+(assert (tree null) ) ;correct
+(assert (tree t null ) ) ;correct
 (assert (tree (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) t t t t ) ) ;correct
 (assert (tree (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) t t t t 2 ) ) ;will fail, Int at end
 (assert (tree (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) t t 2 t t ) ) ;will fail, Int in between
@@ -37,6 +39,8 @@
 (assert (list l l l l (unary (> alpha beta)) ) ) ;will fail dpred at the end
 (assert (list l l l l ) ) ;correct
 (assert (list l ) ) ;correct
+(assert (list null) ) ;correct
+(assert (list t null ) ) ;correct
 (assert (list (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) l l l l ) ) ;correct
 (assert (list (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) l l l l 2 ) ) ;will fail, Int at end
 (assert (list (unary (> alpha beta)) (unary (> alpha beta)) (left (> alpha beta)) l l 2 l l ) ) ;will fail, Int in between
@@ -48,16 +52,19 @@
 (assert (pton l)) ; fail only one arg
 (assert (pton l l l )) ; fail three arg
 (assert (pton l t )) ; fail list to tree
+(assert (pton l null )) ; correct
 
 (assert (ptol t t)) ; correct
 (assert (ptol t)) ; fail only one arg
 (assert (ptol t t t )) ; fail three arg
 (assert (ptol t l )) ; fail tree to list
+(assert (ptol t null)) ; correct
 
 (assert (ptor t t)) ; correct
 (assert (ptor t)) ; fail only one arg
 (assert (ptor t t t )) ; fail three arg
 (assert (ptor t l )) ; fail tree to list
+(assert (ptor t null)) ; correct
 
 (assert (ptolr t t t)) ; correct
 (assert (ptolr t t )) ; fail only two args
@@ -65,11 +72,16 @@
 (assert (ptolr t t l )) ; fail tree to list
 (assert (ptolr l t l )) ; fail tree to list
 (assert (ptolr t l t )) ; fail tree to list
+(assert (ptolr t null null)) ; correct
 
 (assert (ptod tint1 x)) ; correct
 (assert (ptod tint2 x)) ; correct
 (assert (ptod lint1 x)) ; correct
 (assert (ptod lint2 x)) ; correct
+(assert (ptod tint1 null)) ; correct
+(assert (ptod tint2 null)) ; correct
+(assert (ptod lint1 null)) ; correct
+(assert (ptod lint2 null)) ; correct
 (assert (ptod x tint1)) ; fail 1st argument must be Tree or ListLoc
 
 (assert (tree l)) ; fail tree uses ListLoc

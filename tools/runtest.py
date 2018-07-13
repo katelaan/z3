@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys, os
 import subprocess as sp
-import re
+import re, difflib
 
 Z3_BIN = '../build/z3'
 
@@ -23,7 +23,7 @@ TRACEEND = r"------------------------------------------------"
 class Assert(object):
     def __init__(self):
         self.regex = r""
-        self.expected = r""
+        self.expected = []
     def __str__(self):
         return "Assert: grp1 of r'%s' matches r'%s'"
 
@@ -64,11 +64,10 @@ def read_asserts(f):
         tag = TraceTag()
         tag.tagname = m.group(1)
         assertdefs = m.group(2).split(";")[:-1]
-        for i in range(0,len(assertdefs)//2*2,2):
-            a = Assert()
-            a.regex = assertdefs[i]
-            a.expected = assertdefs[i+1]
-            tag.asserts.append(a)
+        a = Assert()
+        a.regex = assertdefs[0]
+        a.expected = assertdefs[1:]
+        tag.asserts.append(a)
         tags.append(tag)
     return tags
 
@@ -129,7 +128,13 @@ def run_test(test):
     sys.stdout.write(BLUE+"Test '" + test.name + "' :\n"+ ENDC)
     if test.stdout != stdout_is:
         sys.stdout.write("  "*1 + "stdout: " + FAIL+"FAIL"+ENDC + "\n")
-        sys.stdout.write("  "*2 + "'" + test.stdout + "' != '" + stdout_is + "'" )
+        
+        #sys.stdout.write("  "*2 + "'" + test.stdout + "' !~ '" + stdout_is + "'" )
+        print("--- stdout_is +++ stdout_expected")
+        diff = difflib.ndiff(stdout_is.splitlines(keepends=True), test.stdout.splitlines(keepends=True))
+        print(''.join(diff), end="")
+        print("--------")
+
     else:
         sys.stdout.write("  "*1 + "stdout: " + GREEN+"OK"+ENDC + "\n")
     try:
@@ -144,16 +149,21 @@ def run_test(test):
             sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " no traces left in file!\n")
             break
         if trace_out.tagname != trace.tagname:
-            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " unexpected trace message!\n")
+            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " unexpected trace tag!\n")
             break
         for a in trace.asserts:
             m = re.search(a.regex, trace_out.message)
-            m2 = re.match(a.expected, m.group(1))
-            #sys.stdout.write("  "*2 + "r'" + a.regex + "' r'"+ a.expected +"' ")
-            if not m2:
-                sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " " + a.expected + "!=" + m.group(1) + "\n")
-            else:
-                sys.stdout.write(" " + GREEN +"OK"+ENDC + "\n")
+            if not m:
+                sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " unexpected trace message!")
+                break
+            for i in range(len(a.expected)):
+                m2 = re.match(a.expected[i], m.group(i+1))
+                #sys.stdout.write("  "*2 + "r'" + a.regex + "' r'"+ a.expected +"' ")
+                if not m2:
+                    sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " (ex:'" + a.expected[i] + "' !~ is:'" + m.group(i+1) + "') group: " + str(i+1))
+                else:
+                    sys.stdout.write(" " + GREEN +"OK"+ENDC)
+        sys.stdout.write("\n")
 
 if len(sys.argv)!=2:
     print("usage: %s testdef.txt")

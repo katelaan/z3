@@ -129,7 +129,10 @@ func_decl * slstar_decl_plugin::mk_pred_func_decl(symbol name, std::string loc, 
         m_manager->raise_exception(msg.c_str());
         return nullptr;
     }
-    while( arg_ptr < arity && domain[arg_ptr]->is_sort_of(m_family_id, loc_k)){
+    while( arg_ptr < arity && 
+        (domain[arg_ptr]->is_sort_of(m_family_id, loc_k) 
+        || domain[arg_ptr]->is_sort_of(m_null_sort->get_family_id(), m_null_sort->get_decl_kind()) ) )
+    {
         if(domain[arg_ptr]->get_num_parameters() == 1){
             parameter p = domain[arg_ptr]->get_parameter(0);
             if(!p.is_ast()) {
@@ -162,7 +165,10 @@ func_decl * slstar_decl_plugin::mk_pto_func_decl(symbol name, std::string loc, d
         return nullptr;
     }
     unsigned arg_ptr;
-    while( arg_ptr < arity && domain[arg_ptr]->is_sort_of(m_family_id, loc_k)){
+    while( arg_ptr < arity && 
+        (domain[arg_ptr]->is_sort_of(m_family_id, loc_k) 
+        || domain[arg_ptr]->is_sort_of(m_null_sort->get_family_id(), m_null_sort->get_decl_kind()) ) )
+    {
         arg_ptr++;
     }
     if(arg_ptr != arity) {
@@ -184,7 +190,11 @@ func_decl * slstar_decl_plugin::mk_ptod_func_decl(symbol name, unsigned exp_arit
         return nullptr;
     }
     unsigned arg_ptr;
-    while( arg_ptr < arity - 1 && (domain[arg_ptr]->is_sort_of(m_family_id, SLSTAR_TREE_LOC) || domain[arg_ptr]->is_sort_of(m_family_id, SLSTAR_LIST_LOC))  ){
+    while( arg_ptr < arity - 1 && 
+        (domain[arg_ptr]->is_sort_of(m_family_id, SLSTAR_TREE_LOC) 
+        || domain[arg_ptr]->is_sort_of(m_family_id, SLSTAR_LIST_LOC)  
+        || domain[arg_ptr]->is_sort_of(m_null_sort->get_family_id(), m_null_sort->get_decl_kind()) ) )
+    {
         arg_ptr++;
     }
     if(arg_ptr != arity - 1) {
@@ -200,7 +210,7 @@ func_decl * slstar_decl_plugin::mk_func_decl(decl_kind k, unsigned num_parameter
                                      unsigned arity, sort * const * domain, sort * range) {
     switch(k) {
     case OP_SLSTAR_NULL:
-        return m_manager->mk_func_decl(symbol("null"), arity, domain, m_manager->mk_bool_sort(), func_decl_info(m_family_id, k));
+        return m_manager->mk_func_decl(symbol("null"), arity, domain, m_null_sort, func_decl_info(m_family_id, k));
 
     case OP_SLSTAR_UNARY:
         return mk_data_predicate_decl(symbol("unary"), k, num_parameters, parameters, arity, domain, range);    
@@ -247,13 +257,19 @@ void slstar_decl_plugin::set_manager(ast_manager * m, family_id id) {
     SASSERT(m_int_sort != 0); // arith_decl_plugin must be installed before slstar_decl_plugin.
     m_manager->inc_ref(m_int_sort);
 
-    m_dpred_sort = m_manager->mk_uninterpreted_sort(symbol("Dpred"));
+    sort_size sz;
+    sz = sort_size::mk_very_big(); // TODO: refine
+    m_dpred_sort = m_manager->mk_sort(symbol("Dpred"), sort_info(m_family_id, SLSTAR_DPRED, sz, 0, nullptr));
     m_manager->inc_ref(m_dpred_sort);
+
+    m_null_sort = m_manager->mk_sort(symbol("NullLoc"), sort_info(m_family_id, SLSTAR_NULL_LOC, sz, 0, nullptr));
+    m_manager->inc_ref(m_null_sort);
 }
 
 void slstar_decl_plugin::finalize() {
     if (m_int_sort)  { m_manager->dec_ref(m_int_sort); }
     if (m_dpred_sort)  { m_manager->dec_ref(m_dpred_sort); }
+    if (m_null_sort)  { m_manager->dec_ref(m_null_sort); }
 }
 
 slstar_decl_plugin::~slstar_decl_plugin() {
@@ -270,9 +286,7 @@ slstar_util::~slstar_util() {
 }
 
 void slstar_util::get_spatial_atoms(std::list<expr*> * atoms, expr * ex) {
-    if(ex->get_kind() != AST_APP ) {
-        return; //TODOsl SASSERT?
-    }
+    SASSERT(is_app(ex));
     app * t = to_app(ex);
 
     // further explore formulas and spatial formulas
@@ -286,8 +300,23 @@ void slstar_util::get_spatial_atoms(std::list<expr*> * atoms, expr * ex) {
             arg = t->get_arg(i);
             get_spatial_atoms(atoms, arg);
         }
+        return;
     }
     atoms->push_back(ex);
+}
+
+
+void slstar_util::get_constants(std::list<expr*> * consts, expr * ex) {
+    SASSERT(is_app(ex));
+    app * t = to_app(ex);
+    expr * arg;
+    for(unsigned int i=0; i<t->get_num_args(); i++){
+        arg = t->get_arg(i);
+        get_constants(consts, arg);
+    }
+    if( t->get_num_args() == 0) {
+        consts->push_back(ex);
+    }
 }
 
 bool slstar_util::is_pto(expr const * ex)  {
@@ -328,4 +357,35 @@ bool slstar_util::is_treeloc(sort const * s){
 }
 bool slstar_util::is_listloc(sort const * s){
     return s->is_sort_of(m_fid, SLSTAR_LIST_LOC);
+}
+
+bool slstar_util::is_nullloc(sort const * s){
+    return s->is_sort_of(m_fid, SLSTAR_NULL_LOC);
+}
+
+bool slstar_util::is_dpred(sort const * s){
+    return s->is_sort_of(m_fid, SLSTAR_DPRED);
+}
+
+bool slstar_util::is_null(expr const * ex) {
+    return is_app_of(ex, m_fid, OP_SLSTAR_NULL);
+}
+bool slstar_util::is_listconst(expr const * ex) {
+    return is_sort_of( get_sort(ex), m_fid, SLSTAR_LIST_LOC);
+}
+bool slstar_util::is_treeconst(expr const * ex) {
+    return is_sort_of( get_sort(ex), m_fid, SLSTAR_TREE_LOC);
+}
+
+unsigned int slstar_util::num_stop_nodes(expr const * ex) {
+    SASSERT(is_tree(ex) || is_list(ex));
+    const app * t = to_app(ex);
+    for(unsigned int i = 0; i < t->get_num_args(); i++){
+        expr * arg = t->get_arg(i);
+        if( !is_sort_of(get_sort(arg), m_fid, SLSTAR_DPRED) ){
+            return t->get_num_args()-i-1;
+        }
+    }
+    SASSERT(false);
+    return 0;
 }
