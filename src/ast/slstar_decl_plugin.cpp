@@ -305,6 +305,28 @@ void slstar_util::get_spatial_atoms(std::list<expr*> * atoms, expr * ex) {
     atoms->push_back(ex);
 }
 
+void slstar_util::get_spatial_atoms_with_polarity(std::list<std::pair<expr*,bool> > * atoms, 
+    expr * ex, bool parent_neg)
+{
+    SASSERT(is_app(ex));
+    app * t = to_app(ex);
+
+    // further explore formulas and spatial formulas
+    if(m_manager.is_and(t) 
+      || m_manager.is_not(t) 
+      || m_manager.is_or(t)
+      || is_sep(t)
+    ){
+        expr * arg;
+        for(unsigned int i=0; i<t->get_num_args(); i++){
+            arg = t->get_arg(i);
+            get_spatial_atoms_with_polarity(atoms, arg, parent_neg != m_manager.is_not(t));
+        }
+        return;
+    }
+    atoms->push_back(std::pair<expr*,bool> (ex, parent_neg));
+}
+
 
 void slstar_util::get_constants(std::list<expr*> * consts, expr * ex) {
     SASSERT(is_app(ex));

@@ -63,7 +63,7 @@ class slstar_tactic : public tactic {
             if( !ret.is_def() ) {
                 // compute normal bounds
                 ret.define();
-                calc_nondata_bounds(g, ret);
+                calc_spatial_bounds(g, ret);
             }
             return ret;
         }
@@ -87,29 +87,23 @@ class slstar_tactic : public tactic {
             return ret;
         }
 
-        void calc_nondata_bounds(goal_ref const & g, bounds & ret) {
+        void calc_spatial_bounds(goal_ref const & g, bounds & ret) {
             for (unsigned int i = 0; i < g->size(); i++) {
                 expr * ex = g->form(i);
                 SASSERT(is_app(ex));
                 app * t = to_app(ex);
                 bounds tmp;
                 tmp.define();
-                calc_nondata_bounds(tmp, t);
+
+                calc_bounds_spatial(tmp,t);     
+
                 calc_bounds_max(ret, tmp);
             }
         }
-
+        
         void calc_bounds_max(bounds & a_ret, bounds & b) {
             a_ret.n_list = MAX(a_ret.n_list, b.n_list);
             a_ret.n_tree = MAX(a_ret.n_tree, b.n_tree);
-        }
-
-        void calc_nondata_bounds(bounds & ret, app * t) {
-            if(m.is_and(t) || m.is_or(t) || m.is_not(t)){
-                calc_nondata_bounds_non_spatial(ret,t);
-            } else {
-                calc_nondata_bounds_spatial(ret,t);
-            }
         }
 
         void calc_nondata_bounds_non_spatial(bounds & ret, app * t) {
@@ -120,27 +114,63 @@ class slstar_tactic : public tactic {
                 app * argt = to_app(arg);
                 bounds tmp;
                 tmp.define();
-                calc_nondata_bounds(tmp, argt);
+                calc_nondata_bounds_non_spatial(tmp, argt);
                 calc_bounds_max(ret, tmp);
             }
         }
 
-        void calc_nondata_bounds_spatial(bounds & ret, app * t) {
-
-
+        void calc_bounds_spatial(bounds & ret, app * t) {
             std::list<expr*> consts;
             util.get_constants(&consts, t);
             count_non_null_const(ret, consts);
 
-            std::list<expr*> atoms;
-            util.get_spatial_atoms(&atoms,t);
+            std::list<std::pair<expr*,bool> > atoms;
+            util.get_spatial_atoms_with_polarity(&atoms, t);
             for(auto it = atoms.begin(); it != atoms.end(); it++){
-                if(util.is_call(*it)) {
-                    if(util.is_list(*it)) {
+                if(util.is_call( (*it).first) ) {
+                    if(util.is_list( (*it).first )) { 
                         ret.n_list += 1;
+
+                        const app * t = to_app( (*it).first );
+                        for(unsigned int i = 0; i < t->get_num_args(); i++){
+                            expr * arg = t->get_arg(i);
+                            if( !is_sort_of(get_sort(arg), util.get_family_id(), SLSTAR_DPRED) ){
+                                //ret.n_list += t->get_num_args()-i-1;
+                                break;
+                            } else if( (*it).second ){
+                                func_decl * d = to_app(arg)->get_decl();
+                                if(d->get_name().str() == "unary"){
+                                    ret.n_list += 1;
+                                } else if(d->get_name().str() == "next"){
+                                    ret.n_list += 2;
+                                } else {
+                                    //TODOsl throw error;
+                                }
+                            }
+                        }
                     }
-                    else if(util.is_tree(*it)) {
-                        ret.n_tree += 1 + util.num_stop_nodes(*it);
+                    else if(util.is_tree( (*it).first) ) {
+                        ret.n_tree += 1;
+
+                        const app * t = to_app( (*it).first );
+                        for(unsigned int i = 0; i < t->get_num_args(); i++){
+                            expr * arg = t->get_arg(i);
+                            if( !is_sort_of(get_sort(arg), util.get_family_id(), SLSTAR_DPRED) ){
+                                ret.n_tree += t->get_num_args()-i-1;
+                                break;
+                            } else if( (*it).second ){
+                                func_decl * d = to_app(arg)->get_decl();
+                                if(d->get_name().str() == "unary"){
+                                    ret.n_tree += 1;
+                                } else if(d->get_name().str() == "left"){
+                                    ret.n_tree += 2;
+                                } else if(d->get_name().str() == "right"){
+                                    ret.n_tree += 2;
+                                } else {
+                                    //TODOsl throw error;
+                                }
+                            }
+                        }
                     } else {
                         SASSERT(false); // not supported
                     }
@@ -415,8 +445,8 @@ tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
     simp_p.set_bool("arith_lhs", true);
     simp_p.set_bool("elim_and", true);
 
-    tactic * preamble = and_then(mk_simplify_tactic(m, simp_p),
-                                 mk_propagate_values_tactic(m, p),
+    tactic * preamble = and_then(/*mk_simplify_tactic(m, simp_p),
+                                 mk_propagate_values_tactic(m, p),*/
                                  mk_slstar_tactic(m, p),
                                  mk_propagate_values_tactic(m, p),
                                  using_params(mk_simplify_tactic(m, p), simp_p),

@@ -91,6 +91,7 @@ public:
     family_id get_family_id() const { return m_fid; }
 
     void get_spatial_atoms(std::list<expr*> * atoms, expr * ex);
+    void get_spatial_atoms_with_polarity(std::list<std::pair<expr*,bool> > * atoms, expr * ex, bool parent_neg = false);
     void get_constants(std::list<expr*> * consts, expr * ex);
 
     bool is_pto(expr const * ex);
