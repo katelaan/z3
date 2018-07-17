@@ -1,0 +1,598 @@
+{
+    "testdefs": [
+        {
+            "name": "Unsat1",
+            "file": "unsat/list-not-list.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },        
+        {
+            "name": "UnsatEqual",
+            "file": "unsat/list-not-list-eq.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },        
+        {
+            "name": "UnsatEqual2",
+            "file": "unsat/list-not-list-eq2.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "BoundsListAnd",
+            "file": "bound-tests/list_and.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":1,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsListAnd2",
+            "file": "bound-tests/list_and2.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":1,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsListAnd3",
+            "file": "bound-tests/list_and3.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":1,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsListAnd4",
+            "file": "bound-tests/list_and4.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":2,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsListAnd5",
+            "file": "bound-tests/list_and5.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":3,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsListAnd6",
+            "file": "bound-tests/list_and6.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":2,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsListAnd7",
+            "file": "bound-tests/list_and7.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":4,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsTreePtod",
+            "file": "bound-tests/tree_ptod.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":3,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsTreePtolPtor",
+            "file": "bound-tests/tree_ptol_ptor.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":3,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsTreePtolr",
+            "file": "bound-tests/tree_ptolr.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":3,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsListSep",
+            "file": "bound-tests/list_sep_list.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsListSepAnd",
+            "file": "bound-tests/list_and_list_sep_list.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsListPton",
+            "file": "bound-tests/list_sep_pton.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":5,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsTree",
+            "file": "bound-tests/tree.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":4,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsTreeStops",
+            "file": "bound-tests/tree_stops.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsCombined",
+            "file": "bound-tests/combined.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsCombined2",
+            "file": "bound-tests/combined2.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsCombined3",
+            "file": "bound-tests/combined3.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsCombined4",
+            "file": "bound-tests/combined4.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsDataList",
+            "file": "bound-tests/list_dat.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":4,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "BoundsDataList",
+            "file": "bound-tests/list_dat2.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":3,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "TreeData",
+            "file": "bound-tests/tree_dat.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":6,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "TreeData",
+            "file": "bound-tests/tree_dat2.smt2",
+            "traces": [
+                {
+                    "tag": "slstar-bound",
+                    "message": "Bounds: (nList [0-9]+) (nTree [0-9]+)",
+                    "asserts": [
+                        {
+                            "text": "nList ([0-9]+)",
+                            "op": "eq",
+                            "expected":0,
+                            "group":1
+                        },
+                        {
+                            "text": "nTree ([0-9]+)",
+                            "op": "eq",
+                            "expected":11,
+                            "group":2
+                        }
+                    ]
+                }
+            ],
+            "stdout":"sat\n"
+        }
+
+    ]
+}

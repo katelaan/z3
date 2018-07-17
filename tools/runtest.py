@@ -2,6 +2,7 @@
 import sys, os
 import subprocess as sp
 import re, difflib
+import json
 
 Z3_BIN = '../build/z3'
 
@@ -20,21 +21,72 @@ ASSERT_DEF = r"[\s]+([a-zA-Z0-9-_]+) ((.*?;)+)"
 TRACESTART = r"-------- \[([a-zA-Z_-]+)][ a-zA-Z_()]*([.\/a-zA-Z_]+):([0-9]+) ---------"
 TRACEEND = r"------------------------------------------------"
 
+PATHPREFIX = '../benchmarks/'
+
 class Assert(object):
+
     def __init__(self):
         self.regex = r""
-        self.expected = []
-    def __str__(self):
-        return "Assert: grp1 of r'%s' matches r'%s'"
+        self.expected = ''
+        self.op = 'eq'
+        self.group = 0
+        self.TESTDEFS = {
+            "eq":  self.test_eq,
+            "lt":  self.test_lt,
+            "gt":  self.test_gt
+        }
+
+    def test(self, match):
+        found = match.group(self.group)
+        m = re.match(self.regex, found)
+        if not m:
+            return False, "no match!"
+        opfunc = self.TESTDEFS[self.op]
+        return opfunc(m.group(1))
+
+    def generic_reason(self,op,val):
+        return " (ex:' " + str(self.expected) + "' "+str(op)+" is:'" + str(val) + "') group: " + str(self.group)
+
+    def test_eq(self, val):
+        return (int(val) == self.expected, self.generic_reason("!=", val))
+
+    def test_lt(self, val):
+        return (int(val) < self.expected, self.generic_reason(">=", val))
+
+    def test_gt(self, val):
+        return (int(val) > self.expected, self.generic_reason("=<", val))
+
 
 class TraceTag(object):
     def __init__(self):
         self.tagname = ""
+        self.message = ""
         self.asserts = []
-    def __str__(self):
-        ret = "Trace: " + self.tagname
+
+    def test(self, trace_out):
+        sys.stdout.write("  "*1 + self.tagname + ":")
+        if not trace_out:
+            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " no traces left in file!\n")
+            return False
+        if trace_out.tagname != self.tagname:
+            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " unexpected trace tag!\n")
+            return False
+
+        m = re.search(self.message, trace_out.message)
+        
+        if not m:
+            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " unexpected trace message!")
+            return False
+
+        ret = True
         for a in self.asserts:
-            ret + "\n" + str(a)
+            result,reason = a.test(m)
+            if result:
+                sys.stdout.write(" " + GREEN +"OK"+ENDC)
+            else:
+                sys.stdout.write(" " + FAIL +"FAIL"+ENDC + reason)
+                ret = False
+        sys.stdout.write("\n")
         return ret
 
 
@@ -45,55 +97,75 @@ class Test(object):
         self.stdout = ""
         self.traces = []
 
+    def runtest(self):
+        traces = set()
+        for trace in self.traces:
+            traces.add("-tr:"+trace.tagname)
+
+        #print([Z3_BIN,self.smtfile] + list(traces))
+        #stdout_is = ""
+        p = sp.Popen([Z3_BIN, self.smtfile] + list(traces), stdout=sp.PIPE)
+        stdout_is = p.stdout.read().decode("utf-8")
+        
+        sys.stdout.write(BLUE+"Test '" + self.name + "' ("+self.smtfile+"):\n"+ ENDC)
+        diff = list( difflib.ndiff(self.stdout, stdout_is.splitlines(keepends=True) ) )
+
+        if len(diff) > 1:
+            sys.stdout.write("  "*1 + "stdout: " + FAIL+"FAIL"+ENDC + "\n")
+            
+            print("+++ stdout_is --- stdout_expected")
+            print(''.join(diff), end="")
+            print("--------")
+
+        else:
+            sys.stdout.write("  "*1 + "stdout: " + GREEN+"OK"+ENDC + "\n")
+        try:
+            f = open(".z3-trace")
+        except:
+            sys.stdout.write("  "*2 + FAIL +"FAIL"+ENDC + " no trace file generated!\n")
+
+        for trace in self.traces:
+            trace.test(read_next_tag(f))
+        f.close()
+
 class TraceOut(object):
     def __init__(self):
         self.tagname = ""
         self.message = ""
 
 def read_asserts(f):
-    tags = []
-    while True:
-        pos = f.tell()
-        line = f.readline().rstrip("\n")
-        if line.startswith("#"):
-            continue
-        m = re.match(ASSERT_DEF,line)
-        if not m:
-            f.seek(pos)
-            break
-        tag = TraceTag()
-        tag.tagname = m.group(1)
-        assertdefs = m.group(2).split(";")[:-1]
+    asserts = []
+    for asrt in f['asserts']:
         a = Assert()
-        a.regex = assertdefs[0]
-        a.expected = assertdefs[1:]
-        tag.asserts.append(a)
+        a.regex = asrt['text']
+        a.op = asrt['op']
+        a.expected = asrt['expected']
+        a.group = asrt['group']
+        asserts.append(a)
+    return asserts
+
+
+def read_traces(f):
+    tags = []
+    for trace in f['traces']:
+        tag = TraceTag()
+        tag.tagname = trace['tag']
+        tag.message = trace['message']
+        tag.asserts = read_asserts(trace)
         tags.append(tag)
     return tags
 
 def read_tests(f):
     tests = []
-    while True:
-        pos = f.tell()
-        line = f.readline().rstrip("\n")
-        if line.startswith("#"):
-            continue
-        m = re.match(TEST_DEF,line)
-        if not m:
-            f.seek(pos)
-            break
+    for testdef in f['testdefs']:
         t = Test()
-        t.name = m.group(1)
-        t.smtfile = m.group(2)
-        t.traces = read_asserts(f)
-        while True:
-            pos = f.tell()
-            line = f.readline()
-            m = re.match(TEST_DEF,line.rstrip("\n"))
-            if m or line == '':
-                f.seek(pos)
-                break
-            t.stdout += line
+        t.name = testdef['name']
+        t.smtfile = PATHPREFIX + testdef['file']
+        if type(testdef['stdout']) == str:
+            t.stdout = testdef['stdout'].splitlines(keepends=True)
+        else:
+            t.stdout = testdef['stdout']
+        t.traces = read_traces(testdef)
         tests.append(t)
     return tests
 
@@ -115,66 +187,14 @@ def read_next_tag(f):
     return t
     
 
-def run_test(test):
-    traces = set()
-    for trace in test.traces:
-        traces.add("-tr:"+trace.tagname)
-
-    #print([Z3_BIN,test.smtfile] + list(traces))
-    p = sp.Popen([Z3_BIN,test.smtfile] + list(traces), stdout=sp.PIPE)
-    stdout_is = p.stdout.read().decode("utf-8")
-
-    #stdout_is = ""
-    sys.stdout.write(BLUE+"Test '" + test.name + "' :\n"+ ENDC)
-    if test.stdout != stdout_is:
-        sys.stdout.write("  "*1 + "stdout: " + FAIL+"FAIL"+ENDC + "\n")
-        
-        #sys.stdout.write("  "*2 + "'" + test.stdout + "' !~ '" + stdout_is + "'" )
-        print("--- stdout_is +++ stdout_expected")
-        diff = difflib.ndiff(stdout_is.splitlines(keepends=True), test.stdout.splitlines(keepends=True))
-        print(''.join(diff), end="")
-        print("--------")
-
-    else:
-        sys.stdout.write("  "*1 + "stdout: " + GREEN+"OK"+ENDC + "\n")
-    try:
-        f = open(".z3-trace")
-    except:
-        sys.stdout.write("  "*2 + FAIL +"FAIL"+ENDC + " trace file generated!\n")
-
-    for trace in test.traces:
-        sys.stdout.write("  "*1 + trace.tagname + ":")
-        trace_out = read_next_tag(f)
-        if not trace_out:
-            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " no traces left in file!\n")
-            break
-        if trace_out.tagname != trace.tagname:
-            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " unexpected trace tag!\n")
-            break
-        for a in trace.asserts:
-            m = re.search(a.regex, trace_out.message)
-            if not m:
-                sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " unexpected trace message!")
-                break
-            for i in range(len(a.expected)):
-                m2 = re.match(a.expected[i], m.group(i+1))
-                #sys.stdout.write("  "*2 + "r'" + a.regex + "' r'"+ a.expected +"' ")
-                if not m2:
-                    sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " (ex:'" + a.expected[i] + "' !~ is:'" + m.group(i+1) + "') group: " + str(i+1))
-                else:
-                    sys.stdout.write(" " + GREEN +"OK"+ENDC)
-        sys.stdout.write("\n")
-
 if len(sys.argv)!=2:
     print("usage: %s testdef.txt")
 path = sys.argv[1]
 f = open(path)
-
-tests = read_tests(f)
+jf = json.load(f)
 f.close()
 
+tests = read_tests(jf)
+
 for t in tests:
-    run_test(t)
-
-
-
+    t.runtest()
