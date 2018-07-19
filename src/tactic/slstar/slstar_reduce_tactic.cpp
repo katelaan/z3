@@ -47,7 +47,7 @@ class slstar_tactic : public tactic {
         imp(ast_manager & _m, params_ref const & p):
             m(_m),
             util(m),
-            m_conv(m, util),
+            m_conv(m),
             m_rw(m, m_conv, p),
             m_proofs_enabled(false),
             m_produce_models(false),
