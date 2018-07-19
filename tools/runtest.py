@@ -108,12 +108,13 @@ class Test(object):
         stdout_is = p.stdout.read().decode("utf-8")
         
         sys.stdout.write(BLUE+"Test '" + self.name + "' ("+self.smtfile+"):\n"+ ENDC)
-        diff = list( difflib.ndiff(self.stdout, stdout_is.splitlines(keepends=True) ) )
+        stdout_is_list = stdout_is.splitlines(keepends=True)
+        diff = list( difflib.ndiff(self.stdout, stdout_is_list) )
 
-        if len(diff) > 1:
+        if len(diff) > 1 or len(stdout_is_list) != len(self.stdout):
             sys.stdout.write("  "*1 + "stdout: " + FAIL+"FAIL"+ENDC + "\n")
             
-            print("+++ stdout_is --- stdout_expected")
+            print("+++ stdout_is\n--- stdout_expected")
             print(''.join(diff), end="")
             print("--------")
 

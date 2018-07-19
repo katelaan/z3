@@ -28,7 +28,7 @@ br_status slstar_rewriter_cfg::reduce_app(func_decl * f, unsigned num, expr * co
     
     switch(f->get_decl_kind()) {
         case OP_SLSTAR_LIST:
-            m_conv.mk_fresh_array(f,num,args,result);
+            result = m_manager.mk_eq(m_conv.mk_fresh_array("X"), m_conv.mk_fresh_array("Y"));
             return BR_DONE;
         case OP_SLSTAR_ALPHA:
         case OP_SLSTAR_BETA:

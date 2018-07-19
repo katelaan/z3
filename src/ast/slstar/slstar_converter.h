@@ -27,7 +27,16 @@ public:
     slstar_converter(ast_manager & m);
     ~slstar_converter();
 
-    void mk_fresh_array(func_decl * f, unsigned num, expr * const * args, expr_ref & result);
+    app * mk_fresh_array(char const * prefix);
+    app * mk_empty_array();
+
+    app * mk_single_element_array(expr * x);
+    app * mk_is_empty(expr * set);
+    app * mk_is_element(expr * x, expr * set);
+
+    app * mk_subset_eq(expr * lhs, expr * rhs);
+    app * mk_union(expr * lhs, expr * rhs);
+    app * mk_intersect(expr * lhs, expr * rhs);
 };
 
 #endif //SLSTAR_CONVERTER_H_
