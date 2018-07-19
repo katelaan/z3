@@ -17,9 +17,11 @@ class slstar_converter {
 
 protected:
     ast_manager              & m;
-    slstar_util              & util;
+    bool_rewriter            m_boolrw;
+    slstar_util              util;
+    array_util               m_arrayutil;
 public:
-    slstar_converter(ast_manager & m, slstar_util & util);
+    slstar_converter(ast_manager & m);
     ~slstar_converter();
 };
 

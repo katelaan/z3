@@ -100,7 +100,7 @@ class slstar_tactic : public tactic {
                 calc_bounds_max(ret, tmp);
             }
         }
-        
+
         void calc_bounds_max(bounds & a_ret, bounds & b) {
             a_ret.n_list = MAX(a_ret.n_list, b.n_list);
             a_ret.n_tree = MAX(a_ret.n_tree, b.n_tree);
@@ -132,6 +132,7 @@ class slstar_tactic : public tactic {
                         ret.n_list += 1;
 
                         const app * t = to_app( (*it).first );
+                        int max_dpred_bound = 0;
                         for(unsigned int i = 0; i < t->get_num_args(); i++){
                             expr * arg = t->get_arg(i);
                             if( !is_sort_of(get_sort(arg), util.get_family_id(), SLSTAR_DPRED) ){
@@ -140,19 +141,22 @@ class slstar_tactic : public tactic {
                             } else if( (*it).second ){
                                 func_decl * d = to_app(arg)->get_decl();
                                 if(d->get_name().str() == "unary"){
-                                    ret.n_list += 1;
+                                    max_dpred_bound = 1;
                                 } else if(d->get_name().str() == "next"){
-                                    ret.n_list += 2;
+                                    max_dpred_bound = 2;
+                                    break; //No bigger data predicate bound known
                                 } else {
                                     //TODOsl throw error;
                                 }
                             }
                         }
+                        ret.n_list += max_dpred_bound;
                     }
                     else if(util.is_tree( (*it).first) ) {
                         ret.n_tree += 1;
 
                         const app * t = to_app( (*it).first );
+                        int max_dpred_bound = 0;
                         for(unsigned int i = 0; i < t->get_num_args(); i++){
                             expr * arg = t->get_arg(i);
                             if( !is_sort_of(get_sort(arg), util.get_family_id(), SLSTAR_DPRED) ){
@@ -161,16 +165,19 @@ class slstar_tactic : public tactic {
                             } else if( (*it).second ){
                                 func_decl * d = to_app(arg)->get_decl();
                                 if(d->get_name().str() == "unary"){
-                                    ret.n_tree += 1;
+                                    max_dpred_bound = 1;
                                 } else if(d->get_name().str() == "left"){
-                                    ret.n_tree += 2;
+                                    max_dpred_bound = 2;
+                                    break; //No bigger data predicate bound known
                                 } else if(d->get_name().str() == "right"){
-                                    ret.n_tree += 2;
+                                    max_dpred_bound = 2;
+                                    break; //No bigger data predicate bound known
                                 } else {
                                     //TODOsl throw error;
                                 }
                             }
                         }
+                        ret.n_tree += max_dpred_bound;
                     } else {
                         SASSERT(false); // not supported
                     }

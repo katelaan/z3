@@ -560,7 +560,7 @@
                         {
                             "text": "nTree ([0-9]+)",
                             "op": "eq",
-                            "expected":6,
+                            "expected":4,
                             "group":2
                         }
                     ]
