@@ -23,13 +23,18 @@ void slstar_rewriter_cfg::updt_local_params(params_ref const & _p) {
 }
 
 br_status slstar_rewriter_cfg::reduce_app(func_decl * f, unsigned num, expr * const * args, expr_ref & result, proof_ref & result_pr) {
-    TRACE("slstar_rw", tout << "func: " << f->get_name() << std::endl;
-                       tout << "args: " << std::endl;);
+    TRACE("slstar_rw", 
+        tout << "func: " << f->get_name() << std::endl;
+        tout << "args: " << std::endl;
+        for(unsigned int i=0; i<num; i++) {
+            tout <<  mk_ismt2_pp(args[i], m_manager, 2) << std::endl;
+        }
+    );
     
     switch(f->get_decl_kind()) {
         case OP_SLSTAR_LIST:
-            result = m_manager.mk_eq(m_conv.mk_fresh_array("X"), m_conv.mk_fresh_array("Y"));
-            return BR_DONE;
+            //result = m_manager.mk_eq(m_conv.mk_fresh_array("X"), m_conv.mk_fresh_array("Y"));
+            //return BR_DONE;
         case OP_SLSTAR_ALPHA:
         case OP_SLSTAR_BETA:
         default:
