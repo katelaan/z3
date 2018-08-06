@@ -11,6 +11,7 @@ struct slstar_rewriter_cfg : public default_rewriter_cfg {
     expr_ref_vector            m_out;
     slstar_converter         & m_conv;
     sort_ref_vector            m_bindings;
+    expr                     * current;
 
     unsigned long long         m_max_memory;
     unsigned                   m_max_steps;
@@ -28,7 +29,7 @@ struct slstar_rewriter_cfg : public default_rewriter_cfg {
     //bool max_scopes_exceeded(unsigned num_scopes) const;
     //bool max_frames_exceeded(unsigned num_frames) const;
     //bool max_steps_exceeded(unsigned num_steps) const;
-    //bool pre_visit(expr * t);
+    bool pre_visit(expr * t);
     br_status reduce_app(func_decl * f, unsigned num, expr * const * args, expr_ref & result, proof_ref & result_pr);
     //bool reduce_quantifier(quantifier * old_q, 
     //                       expr * new_body, 

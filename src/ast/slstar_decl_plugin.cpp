@@ -164,7 +164,7 @@ func_decl * slstar_decl_plugin::mk_pto_func_decl(symbol name, std::string loc, d
         m_manager->raise_exception(msg.c_str());
         return nullptr;
     }
-    unsigned arg_ptr;
+    unsigned arg_ptr = 0;
     while( arg_ptr < arity && 
         (domain[arg_ptr]->is_sort_of(m_family_id, loc_k) 
         || domain[arg_ptr]->is_sort_of(m_null_sort->get_family_id(), m_null_sort->get_decl_kind()) ) )
@@ -189,7 +189,7 @@ func_decl * slstar_decl_plugin::mk_ptod_func_decl(symbol name, unsigned exp_arit
         m_manager->raise_exception(msg.c_str());
         return nullptr;
     }
-    unsigned arg_ptr;
+    unsigned arg_ptr = 0;
     while( arg_ptr < arity - 1 && 
         (domain[arg_ptr]->is_sort_of(m_family_id, SLSTAR_TREE_LOC) 
         || domain[arg_ptr]->is_sort_of(m_family_id, SLSTAR_LIST_LOC)  

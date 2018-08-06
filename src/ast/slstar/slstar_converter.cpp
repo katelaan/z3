@@ -64,3 +64,33 @@ app * slstar_converter::mk_intersect(expr * lhs, expr * rhs) {
     expr * args[2] = {lhs, rhs};
     return m_arrayutil.mk_map(f, 2, args);
 }
+
+void slstar_converter::add_pred(expr * ex, expr * const * args, unsigned num) {
+    SASSERT(is_app(ex));
+    app * t = to_app(ex);
+    t->
+}
+void slstar_converter::add_floc(expr * ex, expr * const * args, unsigned num) {
+
+}
+void slstar_converter::add_fdat(expr * ex, expr * const * args, unsigned num) {
+
+}
+void slstar_converter::add_ptox(expr * ex, expr * const * args, unsigned num) {
+
+}
+void slstar_converter::add_sep(expr * ex, expr * const * args, unsigned num) {
+
+}
+void slstar_converter::add_neg_app(expr * ex, expr * const * args, unsigned num) {
+
+}
+void slstar_converter::add_app(expr * ex, expr * const * args, unsigned num) {
+
+}
+void slstar_converter::add_and(expr * ex, expr * const * args, unsigned num) {
+
+}
+void slstar_converter::add_or(expr * ex, expr * const * args, unsigned num) {
+
+}
