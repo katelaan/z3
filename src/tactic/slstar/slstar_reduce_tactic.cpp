@@ -9,8 +9,8 @@
 #include "tactic/smtlogics/qfnra_tactic.h"
 
 #include "ast/slstar_decl_plugin.h"
-#include "ast/slstar/slstar_rewriter.h"
-#include "ast/slstar/slstar_converter.h"
+//#include "ast/slstar/slstar_rewriter.h"
+#include "ast/slstar/slstar_encoder.h"
 #include "tactic/slstar/slstar_reduce_tactic.h"
 
 #include <set>
@@ -19,26 +19,10 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 
 class slstar_tactic : public tactic {
-    struct bounds {
-        int n_list = -1;
-        int n_tree = -1;
-
-        bool is_def() {
-            return (n_list != -1) && (n_tree != -1);
-        }
-
-        void define() {
-            n_list = 0;
-            n_tree = 0;
-        }
-    };
-
     struct imp {
         ast_manager &     m;
         slstar_util       util;
-        slstar_converter  m_conv;
-        slstar_rewriter   m_rw;
-        unsigned          m_num_steps;
+        slstar_encoder    m_encoder;
 
         bool              m_proofs_enabled;
         bool              m_produce_models;
@@ -47,19 +31,17 @@ class slstar_tactic : public tactic {
         imp(ast_manager & _m, params_ref const & p):
             m(_m),
             util(m),
-            m_conv(m),
-            m_rw(m, m_conv, p),
+            m_encoder(m),
             m_proofs_enabled(false),
             m_produce_models(false),
             m_produce_unsat_cores(false) {
             }
 
         void updt_params(params_ref const & p) {
-            m_rw.cfg().updt_params(p);
         }
 
-        bounds calc_bounds(goal_ref const & g) {
-            bounds ret = noncall_conjunct_bounds(g);
+        sl_bounds calc_bounds(goal_ref const & g) {
+            sl_bounds ret = noncall_conjunct_bounds(g);
             if( !ret.is_def() ) {
                 // compute normal bounds
                 ret.define();
@@ -68,8 +50,8 @@ class slstar_tactic : public tactic {
             return ret;
         }
  
-        bounds noncall_conjunct_bounds(goal_ref const & g) {
-            bounds ret;
+        sl_bounds noncall_conjunct_bounds(goal_ref const & g) {
+            sl_bounds ret;
             expr * conj;
             // Each top level assertion is a conjunct
             // if one of them is free of predicate calls (tree/list) it implicitly gives us the bound
@@ -87,12 +69,12 @@ class slstar_tactic : public tactic {
             return ret;
         }
 
-        void calc_spatial_bounds(goal_ref const & g, bounds & ret) {
+        void calc_spatial_bounds(goal_ref const & g, sl_bounds & ret) {
             for (unsigned int i = 0; i < g->size(); i++) {
                 expr * ex = g->form(i);
                 SASSERT(is_app(ex));
                 app * t = to_app(ex);
-                bounds tmp;
+                sl_bounds tmp;
                 tmp.define();
 
                 calc_bounds_spatial(tmp,t);     
@@ -101,25 +83,25 @@ class slstar_tactic : public tactic {
             }
         }
 
-        void calc_bounds_max(bounds & a_ret, bounds & b) {
+        void calc_bounds_max(sl_bounds & a_ret, sl_bounds & b) {
             a_ret.n_list = MAX(a_ret.n_list, b.n_list);
             a_ret.n_tree = MAX(a_ret.n_tree, b.n_tree);
         }
 
-        void calc_nondata_bounds_non_spatial(bounds & ret, app * t) {
+        void calc_nondata_bounds_non_spatial(sl_bounds & ret, app * t) {
             expr * arg;
             for(unsigned int i=0; i<t->get_num_args(); i++){
                 arg = t->get_arg(i);
                 SASSERT(is_app(arg));
                 app * argt = to_app(arg);
-                bounds tmp;
+                sl_bounds tmp;
                 tmp.define();
                 calc_nondata_bounds_non_spatial(tmp, argt);
                 calc_bounds_max(ret, tmp);
             }
         }
 
-        void calc_bounds_spatial(bounds & ret, app * t) {
+        void calc_bounds_spatial(sl_bounds & ret, app * t) {
             std::list<expr*> consts;
             util.get_constants(&consts, t);
             count_non_null_const(ret, consts);
@@ -185,7 +167,7 @@ class slstar_tactic : public tactic {
             }
         }
 
-        void count_non_null_const(bounds & ret, std::list<expr*> & consts) {
+        void count_non_null_const(sl_bounds & ret, std::list<expr*> & consts) {
             std::set<std::string> tconst;
             std::set<std::string> lconst;
 
@@ -208,7 +190,7 @@ class slstar_tactic : public tactic {
             }
         }
 
-        void count_src_symbols(expr * ex, bounds * ret){
+        void count_src_symbols(expr * ex, sl_bounds * ret){
             std::set<std::string> alloced_const;
 
             ret->define();
@@ -289,11 +271,10 @@ class slstar_tactic : public tactic {
 
             mc = nullptr; pc = nullptr; core = nullptr; result.reset();
             tactic_report report("slstar_reduce", *g);
-            m_rw.reset();
 
             TRACE("slstar", tout << "BEFORE: " << std::endl; g->display(tout););
 
-            bounds bd = calc_bounds(g);
+            sl_bounds bd = calc_bounds(g);
 
             TRACE("slstar-bound", tout << "Bounds:" << 
                 " nList " << bd.n_list << 
@@ -304,23 +285,22 @@ class slstar_tactic : public tactic {
                 return;
             }
 
-            m_num_steps = 0;
             expr_ref   new_curr(m);
-            proof_ref  new_pr(m);
+            //proof_ref  new_pr(m);
             unsigned size = g->size();
             for (unsigned idx = 0; idx < size; idx++) {
                 if (g->inconsistent())
                     break;
                 expr * curr = g->form(idx);
-                m_rw(curr, new_curr, new_pr);
-                m_num_steps += m_rw.get_num_steps();
-                if (m_proofs_enabled) {
-                    proof * pr = g->pr(idx);
-                    new_pr     = m.mk_modus_ponens(pr, new_pr);
-                }
-                g->update(idx, new_curr, new_pr, g->dep(idx));
+                m_encoder(bd, curr, new_curr);
+                //if (m_proofs_enabled) {
+                //    proof * pr = g->pr(idx);
+                //    new_pr     = m.mk_modus_ponens(pr, new_pr);
+                //}
+                //g->update(idx, new_curr, nullptr, g->dep(idx));
+                m_encoder.reset();
 
-                if (is_app(new_curr)) {
+                //if (is_app(new_curr)) {
                     //const app * a = to_app(new_curr.get());
                     //if (a->get_family_id() == m_conv.fu().get_family_id() &&
                     //    a->get_decl_kind() == OP_FPA_IS_NAN) {
@@ -333,7 +313,7 @@ class slstar_tactic : public tactic {
                     //    result.back()->assert_expr(m.mk_eq(exp, m_conv.bu().mk_bv_neg(m_conv.bu().mk_numeral(1, m_conv.bu().get_bv_size(exp)))));
                     //    result.back()->assert_expr(m.mk_eq(sig, m_conv.bu().mk_numeral(1, m_conv.bu().get_bv_size(sig))));
                     //}
-                }
+                //}
             }
 
             //if (g->models_enabled())
@@ -348,6 +328,7 @@ class slstar_tactic : public tactic {
             SASSERT(g->is_well_sorted());
             TRACE("slstar", tout << "AFTER: " << std::endl; g->display(tout);
                             if (mc) mc->display(tout); tout << std::endl; );
+
         }
     };
 
