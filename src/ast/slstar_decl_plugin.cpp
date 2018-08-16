@@ -397,6 +397,12 @@ bool slstar_util::is_dpred(sort const * s){
 bool slstar_util::is_null(expr const * ex) {
     return is_app_of(ex, m_fid, OP_SLSTAR_NULL);
 }
+
+bool slstar_util::is_loc(expr const * ex) {
+    return is_listconst(ex) || is_treeconst(ex) || is_null(ex);
+}
+
+
 bool slstar_util::is_listconst(expr const * ex) {
     return is_sort_of( get_sort(ex), m_fid, SLSTAR_LIST_LOC);
 }

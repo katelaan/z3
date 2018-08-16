@@ -111,6 +111,7 @@ public:
     bool is_listconst(expr const * ex);
     bool is_treeconst(expr const * ex);
     bool is_null(expr const * ex);
+    bool is_loc(expr const * ex);
 
     bool is_listloc(sort const * s);
     bool is_treeloc(sort const * s);

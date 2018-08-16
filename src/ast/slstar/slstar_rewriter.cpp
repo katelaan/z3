@@ -85,7 +85,8 @@ br_status slstar_rewriter_cfg::reduce_app(func_decl * f, unsigned num, expr * co
                 m_enc.add_not(current, args, num);
                 break;
             default:
-                m_enc.add_app(current, args, num);
+                //m_enc.add_app(current, args, num);
+                break;
         }
     }
     // if is top level:

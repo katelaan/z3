@@ -461,11 +461,16 @@ void slstar_encoder::encode(expr * ex) {
         add_or(ex, t->get_args(), num);
     } else if(m.is_not(t)){
         add_not(ex, t->get_args(), num);
+    } else if(m.is_eq(t)){
+        add_eq(ex, t->get_args(), num);
+    } else if(m.is_distinct(t)){
+        add_distinct(ex, t->get_args(), num);
     } else {
-        TRACE("slstar_enc", 
-            tout << "Unknown operation!" << std::endl;
-        );
-        m.raise_exception("Unknown operation");
+        add_floc_fdat( ex, t->get_args(), num);
+        //TRACE("slstar_enc", 
+        //    tout << "Unknown operation!" << std::endl;
+        //);
+        //m.raise_exception("Unknown operation");
     }
 }
 
@@ -803,10 +808,33 @@ void slstar_encoder::add_not(expr * ex, expr * const * args, unsigned num) {
     enc->inc_ref();
     encoding[ex] = enc;
 }
-void slstar_encoder::add_app(expr * ex, expr * const * args, unsigned num) {
-    //TODOsl this was intended for adding the X=Y constraints -> fix
+
+void slstar_encoder::add_eq(expr * ex, expr * const * args, unsigned num) {
+    SASSERT(num==2);
     add_floc_fdat(ex,args,num);
+    if(util.is_loc(args[0])) {
+        expr* lhs = mk_encoded_loc(args[0]);
+        expr* rhs = mk_encoded_loc(args[1]);
+        m.dec_ref(encoding[ex]->A);
+        encoding[ex]->A = m.mk_eq(lhs,rhs);
+        m.inc_ref(encoding[ex]->A);
+    }
 }
+
+void slstar_encoder::add_distinct(expr * ex, expr * const * args, unsigned num) {
+    SASSERT(num!=0);
+    add_floc_fdat(ex,args,num);
+    if(util.is_loc(args[0])) {
+        std::vector<expr*> distargs;
+        for(unsigned i=0; i<num; i++) {
+            distargs.push_back(mk_encoded_loc(args[i]));
+        }
+        m.dec_ref(encoding[ex]->A);
+        encoding[ex]->A = m.mk_distinct(num, &distargs[0]);
+        m.inc_ref(encoding[ex]->A);
+    }
+}
+
 void slstar_encoder::add_and(expr * ex, expr * const * args, unsigned num) {
     bool is_spatial = is_any_spatial(args,num);
     if(is_spatial) {

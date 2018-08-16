@@ -135,15 +135,16 @@ public:
     void add_list(expr * ex, expr * const * args, unsigned num);
     void add_const(expr * ex);
     void add_floc_fdat(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
+    void add_eq(expr * ex, expr * const * args, unsigned num);         /* T_N^s */
+    void add_distinct(expr * ex, expr * const * args, unsigned num);   /* T_N^s */
     void add_pton(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
     void add_ptol(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
     void add_ptor(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
     void add_ptod(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
     void add_ptolr(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
-    void add_sep(expr * ex, expr * const * args, unsigned num);   /* T_N^s */
+    void add_sep(expr * ex, expr * const * args, unsigned num);    /* T_N^s */
 
     void add_not(expr * ex, expr * const * args, unsigned num);     /* T_N^b */
-    void add_app(expr * ex, expr * const * args, unsigned num);     /* T_N^b */
     void add_and(expr * ex, expr * const * args, unsigned num);     /* T_N^b */
     void add_or(expr * ex, expr * const * args, unsigned num);     /* T_N^b */
 
