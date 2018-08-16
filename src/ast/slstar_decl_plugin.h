@@ -82,6 +82,7 @@ class slstar_util {
     ast_manager        & m_manager;
     slstar_decl_plugin * m_plugin;
     family_id          m_fid;
+    app                * m_null;
 public:
     slstar_util(ast_manager & m);
     ~slstar_util();
@@ -115,6 +116,8 @@ public:
     bool is_treeloc(sort const * s);
     bool is_nullloc(sort const * s);
     bool is_dpred(sort const * s);
+
+    app * mk_null();
 
     unsigned int num_stop_nodes(expr const * t);
 };

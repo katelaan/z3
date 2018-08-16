@@ -1,6 +1,4 @@
 {
-    "python.linting.enabled": false,
-    "python.pythonPath": "/usr/bin/python3",
     "files.associations": {
         "*.tcc": "cpp",
         "list": "cpp",
@@ -42,5 +40,5 @@
         "cinttypes": "cpp",
         "type_traits": "cpp"
     },
-    "C_Cpp.intelliSenseEngineFallback": "Disabled"
+    "C_Cpp.intelliSenseEngineFallback": "Enabled"
 }

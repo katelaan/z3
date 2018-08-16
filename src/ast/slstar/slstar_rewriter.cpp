@@ -44,7 +44,7 @@ br_status slstar_rewriter_cfg::reduce_app(func_decl * f, unsigned num, expr * co
                 break;
             case OP_SLSTAR_TREE:
             case OP_SLSTAR_LIST:
-                m_enc.add_pred(current, args, num);
+                //m_enc.add_pred(current, args, num);
                 result = m_manager.mk_true();
                 return BR_DONE;
                 break;

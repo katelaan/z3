@@ -286,19 +286,20 @@ class slstar_tactic : public tactic {
             }
 
             expr_ref   new_curr(m);
+            m_encoder.prepare(bd);
             //proof_ref  new_pr(m);
             unsigned size = g->size();
             for (unsigned idx = 0; idx < size; idx++) {
                 if (g->inconsistent())
                     break;
                 expr * curr = g->form(idx);
-                m_encoder(bd, curr, new_curr);
+                m_encoder.encode_top(curr, new_curr);
                 //if (m_proofs_enabled) {
                 //    proof * pr = g->pr(idx);
                 //    new_pr     = m.mk_modus_ponens(pr, new_pr);
                 //}
-                //g->update(idx, new_curr, nullptr, g->dep(idx));
-                m_encoder.reset();
+                g->update(idx, new_curr, nullptr, g->dep(idx));
+                m_encoder.clear_enc_dict();
 
                 //if (is_app(new_curr)) {
                     //const app * a = to_app(new_curr.get());
@@ -315,6 +316,7 @@ class slstar_tactic : public tactic {
                     //}
                 //}
             }
+            g->assert_expr(m_encoder.mk_global_constraints());
 
             //if (g->models_enabled())
             //    mc = mk_slstar_model_converter(m, m_conv);

@@ -280,9 +280,14 @@ slstar_util::slstar_util(ast_manager & m) :
     m_fid(m.mk_family_id("slstar"))
 {
     m_plugin = static_cast<slstar_decl_plugin*>(m.get_plugin(m_fid));
+
+    func_decl * fd = m_plugin->mk_func_decl(OP_SLSTAR_NULL, 0, nullptr, 0, nullptr, nullptr);
+    m_null = m.mk_app(fd,(expr * const *) nullptr);
+    m.inc_ref(m_null);
 }
 
 slstar_util::~slstar_util() {
+    if(m_null) m_manager.dec_ref(m_null);
 }
 
 void slstar_util::get_spatial_atoms(std::list<expr*> * atoms, expr * ex) {
@@ -397,6 +402,10 @@ bool slstar_util::is_listconst(expr const * ex) {
 }
 bool slstar_util::is_treeconst(expr const * ex) {
     return is_sort_of( get_sort(ex), m_fid, SLSTAR_TREE_LOC);
+}
+
+app * slstar_util::mk_null() {
+    return m_null;
 }
 
 unsigned int slstar_util::num_stop_nodes(expr const * ex) {

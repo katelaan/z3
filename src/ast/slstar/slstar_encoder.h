@@ -36,6 +36,7 @@ class slstar_encoder {
 protected:
     ast_manager            & m;
     bool_rewriter            m_boolrw;
+    sl_bounds                bounds;
 
     sort                   * m_array_sort;
     sort                   * m_int_sort;
@@ -46,18 +47,25 @@ protected:
     func_decl              * f_right;
 
     std::map<expr*,sl_enc*>   encoding;
+    std::map<expr*,app*>     locencoding;
+    std::vector<expr*>       list_locs;
+    std::vector<expr*>       tree_locs;
+
+    expr                   * Xn;
+    expr                   * Xl;
+    expr                   * Xr;
+    expr                   * Xd;
 public:
     slstar_util              util;
     array_util               m_arrayutil;
 
     slstar_encoder(ast_manager & m);
     ~slstar_encoder();
-    void operator()(sl_bounds bd, expr * current, expr_ref & new_ex);
 
     app * mk_fresh_array(char const * prefix);
     app * mk_empty_array();
 
-    app * mk_single_element_array(expr * x);
+    app * mk_set_from_elements(expr * const * elem, unsigned num );
     app * mk_set_remove_element(expr * x, expr * set);
     app * mk_is_empty(expr * set);
     app * mk_is_element(expr * x, expr * set);
@@ -67,12 +75,64 @@ public:
     app * mk_intersect(expr * lhs, expr * rhs);
 
     app * mk_encoded_loc(expr * ex);
-    app * mk_gobal_constraints(expr * ex);
+    app * mk_global_constraints();
 
-    void reset();
+    app * mk_isstop(expr * xenc, std::vector<expr*> & stops);
+    app * mk_is_successor_tree(expr * x, expr * y);
+    app * mk_is_successor_list(expr * x, expr * y);
+    app * mk_defineY_tree(sl_enc * enc, expr * Z);
+    app * mk_defineY_list(sl_enc * enc, expr * Z);
+    app * mk_reach1(expr * Z, 
+        std::vector<func_decl*> & prev_reach, 
+        std::vector<expr*> & xlocs, 
+        std::vector<expr*> & stops,
+        decl_kind k);
+    app * mk_reachN(std::vector<func_decl*> & prev_reach, std::vector<expr*> & xlocs);
+    app * mk_reachability_list(expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops);
+    app * mk_reachability_tree(expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops);
+    app * mk_emptyZ(expr * xenc, std::vector<expr*> & xlocs, std::vector<expr*> & stops);
+    app * mk_footprint(expr * xenc,
+        expr * Z, 
+        std::vector<expr*> & xlocs, 
+        std::vector<func_decl*> & prev_reach, 
+        std::vector<expr*> & stops);
+    app * mk_all_succs_different_list(expr * xi, expr * xj);
+    app * mk_all_succs_different_tree(expr * xi, expr * xj);
+    app * mk_oneparent_list(expr * Z, std::vector<expr*> & xlocs);
+    app * mk_oneparent_tree(expr * Z, std::vector<expr*> & xlocs);
+    app * mk_structure_list(expr * xenc, 
+        expr * Z, 
+        std::vector<expr*> & xlocs, 
+        std::vector<func_decl*> & prev_reach, 
+        std::vector<expr*> & stops);
+    app * mk_structure_tree(expr * xenc, 
+        expr * Z, 
+        std::vector<expr*> & xlocs, 
+        std::vector<func_decl*> & prev_reach, 
+        std::vector<expr*> & stops);
+    app * mk_stopseq(expr * xenc, std::vector<expr*> & stops);
+    app * mk_stopsoccur_list(expr * xenc, expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
+    app * mk_stopsoccur_tree(expr * xenc, expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
+    app * mk_stopleaves_list(expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
+    app * mk_stopleaves_tree(expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
+    app * mk_Rn_f(func_decl * f, func_decl * rn, expr * x, expr * y, expr * Z);
+    app * mk_fstop_tree(expr * xp, expr * s, func_decl * f, expr * Z, std::vector<expr*> & xlocs, 
+        std::vector<func_decl*> & prev_reach);
+    app * mk_ordered_tree(expr * Z, 
+        std::vector<expr*> & xlocs, 
+        std::vector<expr*> & stops,
+        std::vector<func_decl*> & prev_reach);
+
+    void clear_enc_dict();
+    void clear_loc_vars();
+    void clear_X_vector();
+
+    void prepare(sl_bounds bd);
+    void encode_top(expr * current, expr_ref & new_ex);
     void encode(expr * ex);
 
-    void add_pred(expr * ex, expr * const * args, unsigned num);
+    void add_tree(expr * ex, expr * const * args, unsigned num);
+    void add_list(expr * ex, expr * const * args, unsigned num);
     void add_const(expr * ex);
     void add_floc_fdat(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
     void add_pton(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
@@ -99,7 +159,6 @@ public:
     expr * Yl;
     expr * Yr;
     expr * Yd;
-    std::set<expr*> Z;
     bool is_spatial;
 
     sl_enc(ast_manager & m, slstar_encoder & enc);
