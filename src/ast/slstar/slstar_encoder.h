@@ -21,6 +21,8 @@ struct sl_bounds {
     int n_list = -1;
     int n_tree = -1;
 
+    bool contains_calls = false;
+
     bool is_def() {
         return (n_list != -1) && (n_tree != -1);
     }
@@ -46,8 +48,11 @@ protected:
     func_decl              * f_left;
     func_decl              * f_right;
 
-    std::map<expr*,sl_enc*>   encoding;
+    std::map<expr*,sl_enc*>  encoding;
     std::map<expr*,app*>     locencoding;
+#if defined(Z3DEBUG)
+    std::set<expr*>          encodedlocs;
+#endif
     std::vector<expr*>       list_locs;
     std::vector<expr*>       tree_locs;
 
@@ -64,6 +69,7 @@ public:
 
     app * mk_fresh_array(char const * prefix);
     app * mk_empty_array();
+    app * mk_full_array();
 
     app * mk_set_from_elements(expr * const * elem, unsigned num );
     app * mk_set_remove_element(expr * x, expr * set);
@@ -122,6 +128,10 @@ public:
         std::vector<expr*> & xlocs, 
         std::vector<expr*> & stops,
         std::vector<func_decl*> & prev_reach);
+    app * mk_is_location(expr* xenc, std::vector<expr*> & xlocs);
+    app * mk_bdata(expr * P, expr * Z, func_decl * f, std::vector<expr*> & xlocs, 
+        std::vector<func_decl*> & prev_reach);
+    app * mk_udata(expr * P, expr * Z, std::vector<expr*> & xlocs);
 
     void clear_enc_dict();
     void clear_loc_vars();
@@ -150,6 +160,7 @@ public:
 
 private:
     bool is_any_spatial(expr * const * args, unsigned num);
+    bool is_any_rewritten(expr * const * args, unsigned num);
 };
 
 class sl_enc{
@@ -161,6 +172,7 @@ public:
     expr * Yr;
     expr * Yd;
     bool is_spatial;
+    bool is_rewritten;
 
     sl_enc(ast_manager & m, slstar_encoder & enc);
     ~sl_enc();
@@ -169,6 +181,7 @@ private:
     ast_manager            & m;
     slstar_encoder         & enc;
     void mk_fresh_Y();
+    void copy_Y(sl_enc * other);
     void inc_ref();
     void dec_ref();
     friend class slstar_encoder;

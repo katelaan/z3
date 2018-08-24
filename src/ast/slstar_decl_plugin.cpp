@@ -394,6 +394,26 @@ bool slstar_util::is_dpred(sort const * s){
     return s->is_sort_of(m_fid, SLSTAR_DPRED);
 }
 
+bool slstar_util::is_dpred_unary(expr const * ex){
+    return is_app_of(ex, m_fid, OP_SLSTAR_UNARY);
+}
+bool slstar_util::is_dpred_binary(expr const * ex){
+    return is_dpred_left(ex) || is_dpred_right(ex) || is_dpred_next(ex);
+}
+bool slstar_util::is_dpred_left(expr const * ex){
+    return is_app_of(ex, m_fid, OP_SLSTAR_LEFT);
+}
+bool slstar_util::is_dpred_right(expr const * ex){
+    return is_app_of(ex, m_fid, OP_SLSTAR_RIGHT);
+}
+bool slstar_util::is_dpred_next(expr const * ex){
+    return is_app_of(ex, m_fid, OP_SLSTAR_NEXT);
+}
+
+bool slstar_util::is_dpred(expr const * ex){
+    return is_dpred_unary(ex) || is_dpred_left(ex) || is_dpred_right(ex) || is_dpred_next(ex);
+}
+
 bool slstar_util::is_null(expr const * ex) {
     return is_app_of(ex, m_fid, OP_SLSTAR_NULL);
 }
@@ -419,7 +439,7 @@ unsigned int slstar_util::num_stop_nodes(expr const * ex) {
     const app * t = to_app(ex);
     for(unsigned int i = 0; i < t->get_num_args(); i++){
         expr * arg = t->get_arg(i);
-        if( !is_sort_of(get_sort(arg), m_fid, SLSTAR_DPRED) ){
+        if( !is_dpred(arg)){ TODOsl uncomment
             return t->get_num_args()-i-1;
         }
     }

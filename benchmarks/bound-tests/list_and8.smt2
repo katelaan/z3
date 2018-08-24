@@ -1,13 +1,13 @@
 (set-logic SLSTAR)
 (declare-const x ListLoc)
 (declare-const y ListLoc)
-(declare-const z ListLoc)
 
 (assert 
+  (and  
+    (list x) 
     (sep 
-        (pton y z) 
-        (pton x z)
-        (= y y y y x)
-    )
-)
+      (list x) 
+      (list y)
+      (distinct y null) )))
 (check-sat)
+(get-model)

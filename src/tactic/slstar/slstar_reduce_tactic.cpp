@@ -110,6 +110,7 @@ class slstar_tactic : public tactic {
             util.get_spatial_atoms_with_polarity(&atoms, t);
             for(auto it = atoms.begin(); it != atoms.end(); it++){
                 if(util.is_call( (*it).first) ) {
+                    ret.contains_calls = true;
                     if(util.is_list( (*it).first )) { 
                         ret.n_list += 1;
 
@@ -316,7 +317,9 @@ class slstar_tactic : public tactic {
                     //}
                 //}
             }
-            g->assert_expr(m_encoder.mk_global_constraints());
+            if(bd.contains_calls) {
+                g->assert_expr(m_encoder.mk_global_constraints());
+            }
 
             //if (g->models_enabled())
             //    mc = mk_slstar_model_converter(m, m_conv);
@@ -438,6 +441,7 @@ tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
     tactic * preamble = and_then(/*mk_simplify_tactic(m, simp_p),
                                  mk_propagate_values_tactic(m, p),*/
                                  mk_slstar_tactic(m, p),
+                                 mk_simplify_tactic(m, simp_p),
                                  mk_propagate_values_tactic(m, p),
                                  using_params(mk_simplify_tactic(m, p), simp_p),
                                  if_no_proofs(if_no_unsat_cores(mk_ackermannize_bv_tactic(m, p))));

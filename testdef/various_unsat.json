@@ -1,0 +1,34 @@
+{
+    "testdefs": [
+        {
+            "name": "Unsat2",
+            "file": "unsat/list-not-list2.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },               
+        {
+            "name": "DoubleAlloc",
+            "file": "unsat/double_alloc.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "DoubleAlloc2",
+            "file": "unsat/double_alloc2.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },        
+        {
+            "name": "NotListNull",
+            "file": "unsat/not_list_null.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "EmptyAndNotEmpty",
+            "file": "unsat/empty_and_notempty.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        }
+    ]
+}

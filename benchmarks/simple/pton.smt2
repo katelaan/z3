@@ -11,5 +11,4 @@
     )
 )
 (check-sat)
-(get-model)
 

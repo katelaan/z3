@@ -1,0 +1,22 @@
+{
+    "testdefs": [
+        {
+            "name": "Unsat1",
+            "file": "unsat/list-not-list.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "UnsatEqual",
+            "file": "unsat/list-not-list-eq.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        }, 
+        {
+            "name": "UnsatEqual2",
+            "file": "unsat/list-not-list-eq2.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        }
+    ]
+}

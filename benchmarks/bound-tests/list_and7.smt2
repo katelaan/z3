@@ -9,4 +9,4 @@
       (list x) 
       (list y) )))
 (check-sat)
-
+(get-model)

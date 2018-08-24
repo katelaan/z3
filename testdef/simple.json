@@ -1,0 +1,52 @@
+{
+    "testdefs": [
+        {
+            "name": "BoolAtom",
+            "file": "simple/bool_atom_test.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        },   
+        {
+            "name": "BoolAtom2",
+            "file": "simple/bool_atom_test2.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },          
+        {
+            "name": "NotTree",
+            "file": "simple/not_tree.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        },            
+        {
+            "name": "NotList",
+            "file": "simple/not_list.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        }, 
+        {
+            "name": "Pton",
+            "file": "simple/pton.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        }, 
+        {
+            "name": "SepTrue",
+            "file": "simple/septrue.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        }, 
+        {
+            "name": "SepTrue2",
+            "file": "simple/septrue2.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        }, 
+        {
+            "name": "True",
+            "file": "simple/true.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        }
+    ]
+}

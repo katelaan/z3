@@ -113,6 +113,13 @@ public:
     bool is_null(expr const * ex);
     bool is_loc(expr const * ex);
 
+    bool is_dpred_unary(expr const * ex);
+    bool is_dpred_binary(expr const * ex);
+    bool is_dpred_left(expr const * ex);
+    bool is_dpred_right(expr const * ex);
+    bool is_dpred_next(expr const * ex);
+    bool is_dpred(expr const * ex);
+
     bool is_listloc(sort const * s);
     bool is_treeloc(sort const * s);
     bool is_nullloc(sort const * s);

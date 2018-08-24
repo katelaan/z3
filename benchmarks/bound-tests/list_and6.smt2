@@ -6,4 +6,3 @@
 (assert (list y))
 (assert (list x))
 (check-sat)
-
