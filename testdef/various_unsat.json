@@ -29,6 +29,18 @@
             "file": "unsat/empty_and_notempty.smt2",
             "traces": [],
             "stdout":"unsat\n"
+        },
+        {
+            "name": "TreeDifferentFootprints",
+            "file": "unsat/tree_ptox.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "ListDifferentFootprints",
+            "file": "unsat/list_ptox.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
         }
     ]
 }

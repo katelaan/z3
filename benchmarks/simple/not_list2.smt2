@@ -1,0 +1,6 @@
+(set-logic SLSTAR)
+(declare-const x ListLoc)
+(declare-const y ListLoc)
+(assert (not (list x y)))
+(check-sat)
+(get-model)

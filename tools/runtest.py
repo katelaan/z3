@@ -102,12 +102,12 @@ class Test(object):
         for trace in self.traces:
             traces.add("-tr:"+trace.tagname)
 
+        sys.stdout.write(BLUE+"Test '" + self.name + "' ("+self.smtfile+"):\n"+ ENDC)
         #print([Z3_BIN,self.smtfile] + list(traces))
         #stdout_is = ""
         p = sp.Popen([Z3_BIN, self.smtfile] + list(traces), stdout=sp.PIPE)
         stdout_is = p.stdout.read().decode("utf-8")
         
-        sys.stdout.write(BLUE+"Test '" + self.name + "' ("+self.smtfile+"):\n"+ ENDC)
         stdout_is_list = stdout_is.splitlines(keepends=True)
         diff = list( difflib.ndiff(self.stdout, stdout_is_list) )
 

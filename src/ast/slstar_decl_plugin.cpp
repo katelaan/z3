@@ -439,7 +439,7 @@ unsigned int slstar_util::num_stop_nodes(expr const * ex) {
     const app * t = to_app(ex);
     for(unsigned int i = 0; i < t->get_num_args(); i++){
         expr * arg = t->get_arg(i);
-        if( !is_dpred(arg)){ TODOsl uncomment
+        if( !is_dpred(arg)){ 
             return t->get_num_args()-i-1;
         }
     }

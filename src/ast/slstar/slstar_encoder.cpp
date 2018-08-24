@@ -226,7 +226,7 @@ app * slstar_encoder::mk_oneparent_tree(expr * Z, std::vector<expr*> & xlocs) {
             m.mk_implies(
                 m.mk_eq(m.mk_app(f_left,xlocs[i]), m.mk_app(f_left,xlocs[i])),
                 m.mk_eq(m.mk_app(f_left,xlocs[i]), mk_encoded_loc(util.mk_null())) )));
-        andargs.push_back( m.mk_and(andargs2.size(), &andargs[0]));
+        andargs.push_back( m.mk_and(andargs2.size(), &andargs2[0]));
         
         for(unsigned j = 0; j<xlocs.size(); j++) {
             if(i==j) continue;
@@ -362,7 +362,7 @@ app * slstar_encoder::mk_ordered_tree(expr * Z,
     std::vector<func_decl*> & prev_reach) 
 {
     std::vector<expr*> andargs;
-    for(unsigned i=0; i<stops.size()-1; i++) {
+    for(int i=0; i< ((int)stops.size())-1; i++) {
         std::vector<expr*> orargs;
         for(unsigned p=0; p<xlocs.size(); p++) {
             orargs.push_back(m.mk_and(

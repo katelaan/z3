@@ -11,7 +11,13 @@
             "file": "simple/bool_atom_test2.smt2",
             "traces": [],
             "stdout":"unsat\n"
-        },          
+        },    
+        {
+            "name": "BoolAtom3",
+            "file": "simple/bool_atom_test3.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },         
         {
             "name": "NotTree",
             "file": "simple/not_tree.smt2",
@@ -45,6 +51,24 @@
         {
             "name": "True",
             "file": "simple/true.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "TreePtoX",
+            "file": "simple/tree_ptox.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "TreePtoX2",
+            "file": "simple/tree_ptox2.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "ListPtoX",
+            "file": "simple/list_ptox.smt2",
             "traces": [],
             "stdout":"sat\n"
         }
