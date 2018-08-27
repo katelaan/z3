@@ -8,6 +8,6 @@
     (sep 
       (list x) 
       (list y)
-      (distinct y null) )))
+      (distinct y (as null ListLoc) )))
 (check-sat)
 (get-model)

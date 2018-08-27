@@ -20,9 +20,9 @@
         },        
         {
             "name": "BoolAtom4",
-            "file": "simple/bool_atom_test3.smt2",
+            "file": "simple/bool_atom_test4.smt2",
             "traces": [],
-            "stdout":"unsat\n"
+            "stdout":"sat\n"
         },    
         {
             "name": "NotTree",

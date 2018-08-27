@@ -287,6 +287,10 @@ class slstar_tactic : public tactic {
                 result.push_back(g.get());
                 return;
             }
+            if(bd.n_list == 0)
+                bd.n_list = 1;
+            if(bd.n_tree == 0)
+                bd.n_tree = 1;
 
             expr_ref   new_curr(m);
             m_encoder.prepare(bd);

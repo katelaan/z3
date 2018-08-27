@@ -249,7 +249,7 @@ app * slstar_encoder::mk_structure_list(expr * xenc,
 {
     expr * reachable;
     if(bounds.n_list == 0){
-        return m.mk_false();
+        reachable = m.mk_false();
     } else {
         func_decl * rN = prev_reach[prev_reach.size()-1];
         expr * reachargs[] = {xenc, xenc};
@@ -269,7 +269,7 @@ app * slstar_encoder::mk_structure_tree(expr * xenc,
 {
     expr * reachable;
     if(bounds.n_tree == 0){
-        return m.mk_false();
+        reachable = m.mk_false();
     } else {
         func_decl * rN = prev_reach[prev_reach.size()-1];
         expr * reachargs[] = {xenc, xenc};

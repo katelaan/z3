@@ -210,7 +210,10 @@ func_decl * slstar_decl_plugin::mk_func_decl(decl_kind k, unsigned num_parameter
                                      unsigned arity, sort * const * domain, sort * range) {
     switch(k) {
     case OP_SLSTAR_NULL:
-        return m_manager->mk_func_decl(symbol("null"), arity, domain, m_null_sort, func_decl_info(m_family_id, k));
+    {
+        func_decl_info fdec(m_family_id, k, 1);
+        return m_manager->mk_func_decl(symbol("null"), arity, domain, m_null_sort, fdec);
+    }
 
     case OP_SLSTAR_UNARY:
         return mk_data_predicate_decl(symbol("unary"), k, num_parameters, parameters, arity, domain, range);    
