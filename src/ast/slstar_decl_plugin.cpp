@@ -378,6 +378,12 @@ bool slstar_util::is_tree(expr const * ex) {
 bool slstar_util::is_list(expr const * ex) {
     return is_app_of(ex, m_fid, OP_SLSTAR_LIST);
 }
+bool slstar_util::is_alpha(expr const * ex){
+    return is_app_of(ex, m_fid, OP_SLSTAR_ALPHA);
+}
+bool slstar_util::is_beta(expr const * ex){
+    return is_app_of(ex, m_fid, OP_SLSTAR_BETA);
+}
 
 bool slstar_util::is_treeloc(sort const * s){
     return s->is_sort_of(m_fid, SLSTAR_TREE_LOC);

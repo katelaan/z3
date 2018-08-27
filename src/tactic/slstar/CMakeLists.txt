@@ -1,6 +1,7 @@
 z3_add_component(slstar_tactics
   SOURCES
     slstar_reduce_tactic.cpp
+    slstar_model_converter.cpp
   COMPONENT_DEPENDENCIES
     slstar
     arith_tactics

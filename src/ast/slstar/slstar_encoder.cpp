@@ -129,7 +129,8 @@ app * slstar_encoder::mk_reachN(std::vector<func_decl*> & prev_reach, std::vecto
 
 app * slstar_encoder::mk_reachability_list( expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops) {
     std::vector<expr*> andargs;
-    andargs.push_back( mk_reach1( Z, prev_reach, list_locs, stops, OP_SLSTAR_LIST));
+    if(bounds.n_list > 0)
+        andargs.push_back( mk_reach1( Z, prev_reach, list_locs, stops, OP_SLSTAR_LIST));
     for(int i=1; i<bounds.n_list; i++){
         andargs.push_back( mk_reachN(prev_reach, list_locs) );
     }
@@ -140,7 +141,8 @@ app * slstar_encoder::mk_reachability_list( expr * Z, std::vector<func_decl*> & 
 
 app * slstar_encoder::mk_reachability_tree( expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops) {
     std::vector<expr*> andargs;
-    andargs.push_back( mk_reach1(Z, prev_reach, tree_locs, stops, OP_SLSTAR_TREE));
+    if(bounds.n_tree > 0)
+        andargs.push_back( mk_reach1(Z, prev_reach, tree_locs, stops, OP_SLSTAR_TREE));
     for(int i=1; i<bounds.n_tree; i++){
         andargs.push_back( mk_reachN(prev_reach, tree_locs));
     }
@@ -224,7 +226,7 @@ app * slstar_encoder::mk_oneparent_tree(expr * Z, std::vector<expr*> & xlocs) {
         andargs2.push_back(m.mk_implies(
             mk_is_element(xlocs[i], Z),
             m.mk_implies(
-                m.mk_eq(m.mk_app(f_left,xlocs[i]), m.mk_app(f_left,xlocs[i])),
+                m.mk_eq(m.mk_app(f_left,xlocs[i]), m.mk_app(f_right,xlocs[i])),
                 m.mk_eq(m.mk_app(f_left,xlocs[i]), mk_encoded_loc(util.mk_null())) )));
         andargs.push_back( m.mk_and(andargs2.size(), &andargs2[0]));
         
@@ -232,7 +234,7 @@ app * slstar_encoder::mk_oneparent_tree(expr * Z, std::vector<expr*> & xlocs) {
             if(i==j) continue;
             andargs.push_back( m.mk_implies(
                 m.mk_and( mk_is_element(xlocs[j], Z), m.mk_not(m.mk_eq(xlocs[i], xlocs[j])) ),
-                mk_all_succs_different_list(xlocs[i], xlocs[j])    
+                mk_all_succs_different_tree(xlocs[i], xlocs[j])    
             ));
         }
     }
@@ -245,12 +247,18 @@ app * slstar_encoder::mk_structure_list(expr * xenc,
     std::vector<func_decl*> & prev_reach, 
     std::vector<expr*> & stops) 
 {
-    func_decl * rN = prev_reach[prev_reach.size()-1];
-    expr * reachargs[] = {xenc, xenc};
+    expr * reachable;
+    if(bounds.n_list == 0){
+        return m.mk_false();
+    } else {
+        func_decl * rN = prev_reach[prev_reach.size()-1];
+        expr * reachargs[] = {xenc, xenc};
+        reachable = m.mk_app(rN, reachargs);
+    }
     return m.mk_and(
         m.mk_implies(m.mk_not(mk_isstop(xenc, stops)), mk_is_element(xenc,Z)),
         mk_oneparent_list(Z,xlocs),
-        m.mk_not(m.mk_app(rN, reachargs)));
+        m.mk_not(reachable));
 }
 
 app * slstar_encoder::mk_structure_tree(expr * xenc, 
@@ -259,12 +267,19 @@ app * slstar_encoder::mk_structure_tree(expr * xenc,
     std::vector<func_decl*> & prev_reach, 
     std::vector<expr*> & stops) 
 {
-    func_decl * rN = prev_reach[prev_reach.size()-1];
-    expr * reachargs[] = {xenc, xenc};
+    expr * reachable;
+    if(bounds.n_tree == 0){
+        return m.mk_false();
+    } else {
+        func_decl * rN = prev_reach[prev_reach.size()-1];
+        expr * reachargs[] = {xenc, xenc};
+        reachable = m.mk_app(rN, reachargs);
+    }
+    
     return m.mk_and(
         m.mk_implies(m.mk_not(mk_isstop(xenc, stops)), mk_is_element(xenc,Z)),
         mk_oneparent_tree(Z,xlocs),
-        m.mk_not(m.mk_app(rN, reachargs)));
+        m.mk_not(reachable));
 }
 
 app * slstar_encoder::mk_stopseq(expr * xenc, std::vector<expr*> & stops) {
@@ -388,14 +403,23 @@ app * slstar_encoder::mk_bdata(expr * Pcont, expr * Z, func_decl * f,
     std::vector<expr*> andargs;
     for(unsigned i=0; i<xlocs.size(); i++) {
         for(unsigned j=0; j<xlocs.size(); j++) {
+            std::vector<expr*> pargs;
+            for(unsigned k=0; k < P->get_num_args(); k++){
+                expr* arg = P->get_arg(k);
+                if(util.is_alpha(arg)){
+                    pargs.push_back(m.mk_app(f_dat, xlocs[i]));
+                } else if(util.is_beta(arg)) {
+                    pargs.push_back(m.mk_app(f_dat, xlocs[j]));
+                } else {
+                    pargs.push_back(arg);
+                }
+            }
             andargs.push_back( m.mk_implies( 
                 m.mk_and(
                     mk_is_element(xlocs[i], Z),
                     mk_is_element(xlocs[j], Z),
                     mk_Rn_f(f,rn,xlocs[i], xlocs[j], Z)),
-                m.mk_app(Pdecl, 
-                    m.mk_app(f_dat,xlocs[i]), 
-                    m.mk_app(f_dat, xlocs[j])) ));
+                m.mk_app(Pdecl, pargs.size(), &pargs[0]) ));
         }
     }
     return m.mk_and(andargs.size(), &andargs[0]);
@@ -405,10 +429,19 @@ app * slstar_encoder::mk_udata(expr * Pcont, expr * Z, std::vector<expr*> & xloc
     app * P = to_app(to_app(Pcont)->get_arg(0));
     func_decl * Pdecl = P->get_decl();
     std::vector<expr*> andargs;
-    for(unsigned i; i<xlocs.size(); i++) {
-            andargs.push_back( m.mk_implies( 
-                mk_is_element(xlocs[i], Z),
-                m.mk_app(Pdecl, m.mk_app(f_dat, xlocs[i])) ));
+    for(unsigned i=0; i < xlocs.size(); i++) {
+        std::vector<expr*> pargs;
+        for(unsigned k=0; k < P->get_num_args(); k++){
+            expr* arg = P->get_arg(k);
+            if(util.is_alpha(arg)){
+                pargs.push_back(m.mk_app(f_dat, xlocs[i]));
+            } else {
+                pargs.push_back(arg);
+            }
+        }
+        andargs.push_back( m.mk_implies( 
+            mk_is_element(xlocs[i], Z),
+            m.mk_app(Pdecl, pargs.size(), &pargs[0]) ));
     }
     return m.mk_and(andargs.size(), &andargs[0]);
 }

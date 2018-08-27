@@ -17,7 +17,13 @@
             "file": "simple/bool_atom_test3.smt2",
             "traces": [],
             "stdout":"unsat\n"
-        },         
+        },        
+        {
+            "name": "BoolAtom4",
+            "file": "simple/bool_atom_test3.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },    
         {
             "name": "NotTree",
             "file": "simple/not_tree.smt2",

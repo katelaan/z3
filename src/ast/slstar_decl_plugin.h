@@ -107,6 +107,8 @@ public:
     bool is_call(expr const * ex);
     bool is_tree(expr const * ex);
     bool is_list(expr const * ex);
+    bool is_alpha(expr const * ex);
+    bool is_beta(expr const * ex);
 
     bool is_listconst(expr const * ex);
     bool is_treeconst(expr const * ex);

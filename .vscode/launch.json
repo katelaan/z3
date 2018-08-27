@@ -17,10 +17,10 @@
             //"args": ["benchmarks/simple/pton.smt2"],
             //"args": ["benchmarks/unsat/list-not-list.smt2"],
             //"args": ["benchmarks/simple/test_list.smt2"],
-            //"args": ["benchmarks/bound-tests/list_and7.smt2"],
+            //"args": ["benchmarks/bound-tests/list_dat2.smt2"],
             //"args": ["benchmarks/simple/pred_testcases.smt2"],
-            //"args": ["benchmarks/simple/bool_atom_test2.smt2"],
-            "args": ["benchmarks/simple/not_tree.smt2"],
+            "args": ["benchmarks/simple/bool_atom_test3.smt2"],
+            //"args": ["benchmarks/simple/not_tree.smt2"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -40,7 +40,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/tools/runtest.py",
-            "args": ["${workspaceFolder}/testdef/testdef.txt"],
+            "args": ["${workspaceFolder}/testdef/simple.json"],
             "cwd": "${workspaceFolder}/testdef"
         }
     ]

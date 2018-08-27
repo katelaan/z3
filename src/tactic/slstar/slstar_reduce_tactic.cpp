@@ -12,6 +12,7 @@
 //#include "ast/slstar/slstar_rewriter.h"
 #include "ast/slstar/slstar_encoder.h"
 #include "tactic/slstar/slstar_reduce_tactic.h"
+#include "tactic/slstar/slstar_model_converter.h"
 
 #include <set>
 
@@ -35,6 +36,7 @@ class slstar_tactic : public tactic {
             m_proofs_enabled(false),
             m_produce_models(false),
             m_produce_unsat_cores(false) {
+
             }
 
         void updt_params(params_ref const & p) {
@@ -321,8 +323,8 @@ class slstar_tactic : public tactic {
                 g->assert_expr(m_encoder.mk_global_constraints());
             }
 
-            //if (g->models_enabled())
-            //    mc = mk_slstar_model_converter(m, m_conv);
+            if (g->models_enabled())
+                mc = alloc(slstar_model_converter, m, m_encoder);
 
             g->inc_depth();
             result.push_back(g.get());

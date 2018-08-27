@@ -223,7 +223,7 @@
                     ]
                 }
             ],
-            "stdout":"sat\n"
+            "stdout":"unsat\n"
         },
         {
             "name": "BoundsTreePtolPtor",
@@ -248,7 +248,7 @@
                     ]
                 }
             ],
-            "stdout":"sat\n"
+            "stdout":"unsat\n"
         },
         {
             "name": "BoundsTreePtolr",
@@ -273,7 +273,7 @@
                     ]
                 }
             ],
-            "stdout":"sat\n"
+            "stdout":"unsat\n"
         },
         {
             "name": "BoundsListSep",
