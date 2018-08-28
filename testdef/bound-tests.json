@@ -186,7 +186,7 @@
                         {
                             "text": "nList ([0-9]+)",
                             "op": "eq",
-                            "expected":4,
+                            "expected":5,
                             "group":1
                         },
                         {

@@ -1,9 +1,6 @@
 z3_add_component(slstar
   SOURCES
     slstar_encoder.cpp
-    slstar_rewriter.cpp
-    #[[fpa2bv_converter.cpp
-    fpa2bv_rewriter.cpp]]
   COMPONENT_DEPENDENCIES
     ast
     rewriter

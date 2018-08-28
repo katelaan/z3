@@ -11,7 +11,6 @@
 enum slstar_sort_kind {
     SLSTAR_TREE_LOC,
     SLSTAR_LIST_LOC,
-    SLSTAR_NULL_LOC,
     SLSTAR_DPRED
 };
 
@@ -24,7 +23,8 @@ enum slstar_op_kind {
     OP_SLSTAR_POINTSTOD,
     OP_SLSTAR_TREE,
     OP_SLSTAR_LIST,
-    OP_SLSTAR_NULL,
+    OP_SLSTAR_LISTNULL,
+    OP_SLSTAR_TREENULL,
 
     OP_SLSTAR_UNARY,
     OP_SLSTAR_LEFT,
@@ -40,7 +40,6 @@ class slstar_decl_plugin : public decl_plugin {
 private:
     sort *              m_int_sort;
     sort *              m_dpred_sort;
-    sort *              m_null_sort = nullptr;
 
     func_decl * mk_support_decl(symbol name, decl_kind k, unsigned num_parameters, 
                                     parameter const * parameters, unsigned arity,
@@ -82,7 +81,6 @@ class slstar_util {
     ast_manager        & m_manager;
     slstar_decl_plugin * m_plugin;
     family_id          m_fid;
-    app                * m_null;
 public:
     slstar_util(ast_manager & m);
     ~slstar_util();
@@ -124,10 +122,9 @@ public:
 
     bool is_listloc(sort const * s);
     bool is_treeloc(sort const * s);
-    bool is_nullloc(sort const * s);
     bool is_dpred(sort const * s);
 
-    app * mk_null();
+    app * mk_null(decl_kind k, unsigned num_parameters = 0, const parameter * params = nullptr) ;
 
     unsigned int num_stop_nodes(expr const * t);
 };

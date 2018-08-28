@@ -40,13 +40,13 @@ protected:
     bool_rewriter            m_boolrw;
     sl_bounds                bounds;
 
-    sort                   * m_array_sort;
-    sort                   * m_int_sort;
+    sort                   * m_array_sort = nullptr;
+    sort                   * m_int_sort = nullptr;
 
-    func_decl              * f_next;
-    func_decl              * f_dat;
-    func_decl              * f_left;
-    func_decl              * f_right;
+    func_decl              * f_next = nullptr;
+    func_decl              * f_dat = nullptr;
+    func_decl              * f_left = nullptr;
+    func_decl              * f_right = nullptr;
 
     std::map<expr*,sl_enc*>  encoding;
     std::map<expr*,app*>     locencoding;
@@ -56,10 +56,11 @@ protected:
     std::vector<expr*>       list_locs;
     std::vector<expr*>       tree_locs;
 
-    expr                   * Xn;
-    expr                   * Xl;
-    expr                   * Xr;
-    expr                   * Xd;
+    expr                   * Xn = nullptr;
+    expr                   * Xl = nullptr;
+    expr                   * Xr = nullptr;
+    expr                   * Xd = nullptr;
+    app                    * enc_null = nullptr;
 public:
     slstar_util              util;
     array_util               m_arrayutil;

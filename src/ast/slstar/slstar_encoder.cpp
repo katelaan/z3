@@ -28,11 +28,19 @@ slstar_encoder::slstar_encoder(ast_manager & m) : m(m),  m_boolrw(m), util(m), m
 
     f_right = m.mk_fresh_func_decl("f_right", 1, domain, m_int_sort);
     m.inc_ref(f_right);
+
+    expr * null = util.mk_null(OP_SLSTAR_LISTNULL);  // Any null will do
+    enc_null = mk_encoded_loc(null);
+    m.inc_ref(enc_null);
+
+    // delete null, but delete is not accessible
+    m.inc_ref(null);
+    m.dec_ref(null);
 }
 
 app * slstar_encoder::mk_isstop(expr * xenc, std::vector<expr*> & stops) {
     std::vector<app*> orargs;
-    orargs.push_back( m.mk_eq(xenc, mk_encoded_loc(util.mk_null()) ) );
+    orargs.push_back( m.mk_eq(xenc, enc_null ) );
     for(unsigned i=0; i<stops.size(); i++) {
         orargs.push_back( m.mk_eq(xenc, stops[i]));
     }
@@ -182,26 +190,26 @@ app * slstar_encoder::mk_footprint(expr * xenc,
 app * slstar_encoder::mk_all_succs_different_list(expr * xi, expr * xj) {
     return m.mk_implies(
         m.mk_eq(m.mk_app(f_next,xi), m.mk_app(f_next,xj) ),
-        m.mk_eq(m.mk_app(f_next,xi), mk_encoded_loc(util.mk_null())));
+        m.mk_eq(m.mk_app(f_next,xi), enc_null));
 }
 
 app * slstar_encoder::mk_all_succs_different_tree(expr * xi, expr * xj) {
     expr * andargs[4];
     andargs[0] = m.mk_implies(
         m.mk_eq(m.mk_app(f_left,xi), m.mk_app(f_left,xj) ),
-        m.mk_eq(m.mk_app(f_left,xi), mk_encoded_loc(util.mk_null())));
+        m.mk_eq(m.mk_app(f_left,xi), enc_null));
 
     andargs[1] = m.mk_implies(
         m.mk_eq(m.mk_app(f_right,xi), m.mk_app(f_right,xj) ),
-        m.mk_eq(m.mk_app(f_right,xi), mk_encoded_loc(util.mk_null())));
+        m.mk_eq(m.mk_app(f_right,xi), enc_null));
 
     andargs[2] = m.mk_implies(
         m.mk_eq(m.mk_app(f_left,xi), m.mk_app(f_right,xj) ),
-        m.mk_eq(m.mk_app(f_left,xi), mk_encoded_loc(util.mk_null())));
+        m.mk_eq(m.mk_app(f_left,xi), enc_null));
 
     andargs[3] = m.mk_implies(
         m.mk_eq(m.mk_app(f_right,xi), m.mk_app(f_left,xj) ),
-        m.mk_eq(m.mk_app(f_right,xi), mk_encoded_loc(util.mk_null())));
+        m.mk_eq(m.mk_app(f_right,xi), enc_null));
     return m.mk_and(4,andargs);
 }
 
@@ -227,7 +235,7 @@ app * slstar_encoder::mk_oneparent_tree(expr * Z, std::vector<expr*> & xlocs) {
             mk_is_element(xlocs[i], Z),
             m.mk_implies(
                 m.mk_eq(m.mk_app(f_left,xlocs[i]), m.mk_app(f_right,xlocs[i])),
-                m.mk_eq(m.mk_app(f_left,xlocs[i]), mk_encoded_loc(util.mk_null())) )));
+                m.mk_eq(m.mk_app(f_left,xlocs[i]), enc_null ) )));
         andargs.push_back( m.mk_and(andargs2.size(), &andargs2[0]));
         
         for(unsigned j = 0; j<xlocs.size(); j++) {
@@ -452,7 +460,6 @@ app * slstar_encoder::mk_global_constraints() {
     }
     expr * unionargs[] = {Xn,Xl,Xr,Xd};
     expr * X = m.mk_fresh_const("X", m_array_sort);
-    expr * enc_null = mk_encoded_loc(util.mk_null());
 
     expr * unionargsLR[] = {Xl,Xr}; 
     expr * Xlr = mk_union(unionargsLR,2); //unionargs+1; TODOsl test
@@ -595,6 +602,8 @@ slstar_encoder::~slstar_encoder() {
     if(f_left) m.dec_ref(f_left);
     if(f_right) m.dec_ref(f_right);
 
+    if(enc_null) m.dec_ref(enc_null);
+
     clear_enc_dict();
     clear_loc_vars();
 }
@@ -672,6 +681,10 @@ app * slstar_encoder::mk_encoded_loc(expr * x) {
     if(locencoding.find(x) != locencoding.end()){
         app * ret = locencoding[x];
         return ret;
+    }
+    // ensure all nulls are the same location
+    if(util.is_null(x) && enc_null != nullptr) {
+        return enc_null;
     }
 
     app* xt = to_app(x);
@@ -852,7 +865,7 @@ void slstar_encoder::add_pton(expr * ex, expr * const * args, unsigned num) {
     expr * y = mk_encoded_loc(args[1]);
     
     expr* f_next_x = m.mk_app(f_next,x);
-    enc->A = m.mk_and(m.mk_eq(f_next_x,y), m.mk_not(m.mk_eq(x, mk_encoded_loc(util.mk_null() ))));
+    enc->A = m.mk_and(m.mk_eq(f_next_x,y), m.mk_not(m.mk_eq(x, enc_null )));
     
     expr * tmp = m.mk_eq(enc->Yn, mk_set_from_elements(&x,1));
     expr * const andargs[] = {tmp, mk_is_empty(enc->Yl), mk_is_empty(enc->Yr), mk_is_empty(enc->Yd) };
@@ -872,7 +885,7 @@ void slstar_encoder::add_ptol(expr * ex, expr * const * args, unsigned num) {
     expr * y = mk_encoded_loc(args[1]);
 
     expr* f_left_x = m.mk_app(f_left,x);
-    enc->A = m.mk_and(m.mk_eq(f_left_x,y), m.mk_not(m.mk_eq(x, mk_encoded_loc(util.mk_null() ))));
+    enc->A = m.mk_and(m.mk_eq(f_left_x,y), m.mk_not(m.mk_eq(x, enc_null )));
     
     
     expr * tmp = m.mk_eq(enc->Yl, mk_set_from_elements(&x,1));
@@ -893,7 +906,7 @@ void slstar_encoder::add_ptor(expr * ex, expr * const * args, unsigned num) {
     expr * y = mk_encoded_loc(args[1]);
 
     expr* f_right_x = m.mk_app(f_right,x);
-    enc->A = m.mk_and(m.mk_eq(f_right_x,y), m.mk_not(m.mk_eq(x, mk_encoded_loc(util.mk_null() ))));
+    enc->A = m.mk_and(m.mk_eq(f_right_x,y), m.mk_not(m.mk_eq(x, enc_null )));
     
     
     expr * tmp = m.mk_eq(enc->Yr, mk_set_from_elements(&x,1));
@@ -914,7 +927,7 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
     expr * y = mk_encoded_loc(args[1]);
 
     expr* f_dat_x = m.mk_app(f_dat,x);
-    enc->A = m.mk_and(m.mk_eq(f_dat_x,y), m.mk_not(m.mk_eq(x, mk_encoded_loc(util.mk_null() ))));
+    enc->A = m.mk_and(m.mk_eq(f_dat_x,y), m.mk_not(m.mk_eq(x, enc_null )));
     
     
     expr * tmp = m.mk_eq(enc->Yd, mk_set_from_elements(&x,1));
@@ -937,7 +950,7 @@ void slstar_encoder::add_ptolr(expr * ex, expr * const * args, unsigned num) {
 
     expr* f_right_x = m.mk_app(f_right,x);
     expr* f_left_x = m.mk_app(f_left,x);
-    enc->A = m.mk_and(m.mk_eq(f_left_x,y1), m.mk_eq(f_right_x,y2), m.mk_not(m.mk_eq(x, mk_encoded_loc(util.mk_null())) ));
+    enc->A = m.mk_and(m.mk_eq(f_left_x,y1), m.mk_eq(f_right_x,y2), m.mk_not(m.mk_eq(x, enc_null ) ));
     
     expr * tmp1 = m.mk_eq(enc->Yl, mk_set_from_elements(&x,1));
     expr * tmp2 = m.mk_eq(enc->Yr, mk_set_from_elements(&x,1));
