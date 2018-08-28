@@ -1,6 +1,9 @@
 z3_add_component(slstar
   SOURCES
     slstar_encoder.cpp
+    pred_encoder.cpp
+    list_encoder.cpp
+    tree_encoder.cpp
   COMPONENT_DEPENDENCIES
     ast
     rewriter

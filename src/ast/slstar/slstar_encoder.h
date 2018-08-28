@@ -1,5 +1,5 @@
-#ifndef SLSTAR_CONVERTER_H_
-#define SLSTAR_CONVERTER_H_
+#ifndef SLSTAR_ENCODER_H_
+#define SLSTAR_ENCODER_H_
 
 #include <map>
 #include <set>
@@ -14,6 +14,9 @@
 #include "ast/pb_decl_plugin.h"
 #include "ast/seq_decl_plugin.h"
 #include "ast/rewriter/bool_rewriter.h"
+#include "ast/slstar/pred_encoder.h"
+#include "ast/slstar/list_encoder.h"
+#include "ast/slstar/tree_encoder.h"
 
 class sl_enc;
 
@@ -34,7 +37,9 @@ struct sl_bounds {
 };
 
 class slstar_encoder {
-
+    friend class pred_encoder;
+    friend class list_encoder;
+    friend class tree_encoder;
 protected:
     ast_manager            & m;
     bool_rewriter            m_boolrw;
@@ -83,56 +88,6 @@ public:
 
     app * mk_encoded_loc(expr * ex);
     app * mk_global_constraints();
-
-    app * mk_isstop(expr * xenc, std::vector<expr*> & stops);
-    app * mk_is_successor_tree(expr * x, expr * y);
-    app * mk_is_successor_list(expr * x, expr * y);
-    app * mk_defineY_tree(sl_enc * enc, expr * Z);
-    app * mk_defineY_list(sl_enc * enc, expr * Z);
-    app * mk_reach1(expr * Z, 
-        std::vector<func_decl*> & prev_reach, 
-        std::vector<expr*> & xlocs, 
-        std::vector<expr*> & stops,
-        decl_kind k);
-    app * mk_reachN(std::vector<func_decl*> & prev_reach, std::vector<expr*> & xlocs);
-    app * mk_reachability_list(expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops);
-    app * mk_reachability_tree(expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops);
-    app * mk_emptyZ(expr * xenc, std::vector<expr*> & xlocs, std::vector<expr*> & stops);
-    app * mk_footprint(expr * xenc,
-        expr * Z, 
-        std::vector<expr*> & xlocs, 
-        std::vector<func_decl*> & prev_reach, 
-        std::vector<expr*> & stops);
-    app * mk_all_succs_different_list(expr * xi, expr * xj);
-    app * mk_all_succs_different_tree(expr * xi, expr * xj);
-    app * mk_oneparent_list(expr * Z, std::vector<expr*> & xlocs);
-    app * mk_oneparent_tree(expr * Z, std::vector<expr*> & xlocs);
-    app * mk_structure_list(expr * xenc, 
-        expr * Z, 
-        std::vector<expr*> & xlocs, 
-        std::vector<func_decl*> & prev_reach, 
-        std::vector<expr*> & stops);
-    app * mk_structure_tree(expr * xenc, 
-        expr * Z, 
-        std::vector<expr*> & xlocs, 
-        std::vector<func_decl*> & prev_reach, 
-        std::vector<expr*> & stops);
-    app * mk_stopseq(expr * xenc, std::vector<expr*> & stops);
-    app * mk_stopsoccur_list(expr * xenc, expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
-    app * mk_stopsoccur_tree(expr * xenc, expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
-    app * mk_stopleaves_list(expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
-    app * mk_stopleaves_tree(expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
-    app * mk_Rn_f(func_decl * f, func_decl * rn, expr * x, expr * y, expr * Z);
-    app * mk_fstop_tree(expr * xp, expr * s, func_decl * f, expr * Z, std::vector<expr*> & xlocs, 
-        std::vector<func_decl*> & prev_reach);
-    app * mk_ordered_tree(expr * Z, 
-        std::vector<expr*> & xlocs, 
-        std::vector<expr*> & stops,
-        std::vector<func_decl*> & prev_reach);
-    app * mk_is_location(expr* xenc, std::vector<expr*> & xlocs);
-    app * mk_bdata(expr * P, expr * Z, func_decl * f, std::vector<expr*> & xlocs, 
-        std::vector<func_decl*> & prev_reach);
-    app * mk_udata(expr * P, expr * Z, std::vector<expr*> & xlocs);
 
     void clear_enc_dict();
     void clear_loc_vars();
@@ -188,4 +143,4 @@ private:
     friend class slstar_encoder;
 };
 
-#endif //SLSTAR_CONVERTER_H_ 
+#endif //SLSTAR_ENCODER_H_ 

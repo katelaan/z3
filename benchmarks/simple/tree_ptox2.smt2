@@ -16,8 +16,8 @@
 (assert 
       (sep
             (ptolr x l r)
-            (ptolr l null null)
-            (ptolr r null null)
+            (ptolr l tree.null tree.null)
+            (ptolr r tree.null tree.null)
             (ptod x xdata)
             (ptod r rdata)
             (ptod l ldata) ))

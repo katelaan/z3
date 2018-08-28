@@ -1,5 +1,5 @@
 (set-logic SLSTAR)
 
-(assert  (not (list null)))
+(assert  (not (list list.null)))
 
 (check-sat)

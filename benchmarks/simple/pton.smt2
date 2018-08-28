@@ -6,8 +6,8 @@
 (assert 
     (sep 
         (pton y z)
-        (pton z null)
-        (pton x null)
+        (pton z list.null)
+        (pton x list.null)
     )
 )
 (check-sat)

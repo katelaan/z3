@@ -3,7 +3,7 @@
 (declare-const z ListLoc)
 
 (assert 
-   (sep (pton y z) (pton y null))
+   (sep (pton y z) (pton y list.null))
 )
 (check-sat)
 
