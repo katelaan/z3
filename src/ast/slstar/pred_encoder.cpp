@@ -177,14 +177,14 @@ app * pred_encoder::mk_fstop(expr * xp, expr * s, func_decl * f, expr * Z, std::
 {
     func_decl * rN = prev_reach[prev_reach.size()-1];
     std::vector<expr*> orargs;
-    orargs.push_back(m.mk_app(f, xp));
+    orargs.push_back(m.mk_eq( m.mk_app(f, xp), s ));
     for(unsigned c=0; c<xlocs.size(); c++) {
         orargs.push_back( m.mk_and( 
             mk_Rn_f(f,rN,xp,xlocs[c],Z),
             enc.mk_is_element(xlocs[c],Z), 
             mk_is_successor(xlocs[c], s) ) );
     }
-    return m.mk_or(orargs.size(), &orargs[0]);
+    return m.mk_or(orargs.size(), &orargs[0]);;
 }
 
 app * pred_encoder::mk_is_location(expr* xenc, std::vector<expr*> & xlocs){

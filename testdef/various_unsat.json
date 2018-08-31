@@ -41,6 +41,36 @@
             "file": "unsat/list_ptox.smt2",
             "traces": [],
             "stdout":"unsat\n"
+        },
+        {
+            "name": "ListSegNullNull",
+            "file": "unsat/list_seg_null_null.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "TreeSegNullNull",
+            "file": "unsat/tree_seg_null_null.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "ListSegNotNull",
+            "file": "unsat/list_seg_not_null.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "TreeSegNotNull",
+            "file": "unsat/tree_seg_not_null.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "TreeSegNullXY",
+            "file": "unsat/tree_seg_null_x_y.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
         }
     ]
 }

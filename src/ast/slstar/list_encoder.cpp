@@ -9,10 +9,15 @@ app * list_encoder::mk_is_successor(expr * x, expr * y) {
 
 app * list_encoder::mk_defineY(sl_enc * e, expr * Z) {
     std::vector<expr*> andargs;
-    andargs.push_back(m.mk_eq(e->Yd, Z));
+    if(Z!=nullptr){
+        andargs.push_back(m.mk_eq(e->Yd, Z));
+        andargs.push_back(m.mk_eq(e->Yn, Z));
+    } else {
+        andargs.push_back(enc.mk_is_empty(e->Yd));
+        andargs.push_back(enc.mk_is_empty(e->Yn));
+    }
     andargs.push_back(enc.mk_is_empty(e->Yl));
     andargs.push_back(enc.mk_is_empty(e->Yr));
-    andargs.push_back(m.mk_eq(e->Yn, Z));
     return m.mk_and(andargs.size(), &andargs[0]);
 }
 

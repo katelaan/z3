@@ -29,9 +29,15 @@ app * tree_encoder::mk_ordered(expr * Z,
 
 app * tree_encoder::mk_defineY(sl_enc * e, expr * Z) {
     std::vector<expr*> andargs;
-    andargs.push_back(m.mk_eq(e->Yd, Z));
-    andargs.push_back(m.mk_eq(e->Yl, Z));
-    andargs.push_back(m.mk_eq(e->Yr, Z));
+    if(Z!=nullptr){
+        andargs.push_back(m.mk_eq(e->Yd, Z));
+        andargs.push_back(m.mk_eq(e->Yl, Z));
+        andargs.push_back(m.mk_eq(e->Yr, Z));
+    } else {
+        andargs.push_back(enc.mk_is_empty(e->Yd));
+        andargs.push_back(enc.mk_is_empty(e->Yl));
+        andargs.push_back(enc.mk_is_empty(e->Yr));
+    }
     andargs.push_back(enc.mk_is_empty(e->Yn));
     return m.mk_and(andargs.size(), &andargs[0]);
 }

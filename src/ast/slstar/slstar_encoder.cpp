@@ -274,6 +274,8 @@ app * slstar_encoder::mk_encoded_loc(expr * x) {
     app* xt = to_app(x);
     func_decl * fdec =xt->get_decl();
     app * fresh = m.mk_fresh_const(fdec->get_name().bare_str(), m_int_sort); //TODOsl get sort 
+    std::string name = fresh->get_decl()->get_name().bare_str();
+    encoded_const_names.emplace(name);
     locencoding[x] = fresh;
 #if defined(Z3DEBUG)
     encodedlocs.emplace(fresh); //TODOsl delete
@@ -289,7 +291,6 @@ void slstar_encoder::add_list(expr * ex, expr * const * args, unsigned num) {
 
     expr * xenc;
 
-    expr * Z = mk_fresh_array("Z");
     std::vector<func_decl*> prev_reach;
     std::vector<expr*> dpred;
     std::vector<expr*> stops;
@@ -307,8 +308,25 @@ void slstar_encoder::add_list(expr * ex, expr * const * args, unsigned num) {
             stops.push_back( mk_encoded_loc(args[i]));
         }
     }
-    std::vector<expr*> andargs;
+
     list_encoder pe(*this);
+    if(bounds.n_list == 0) {
+        enc->B = pe.mk_defineY(enc,nullptr);
+        /* data predicates are trivally true, since we got an empty list */
+        if(stops.size() == 0){
+            enc->A = m.mk_eq(xenc, enc_null);
+        } else if(stops.size() == 1){
+            enc->A = m.mk_and(m.mk_eq(xenc, enc_null), m.mk_eq(stops[0],enc_null));
+        } else {
+            enc->A = m.mk_false();
+        }
+        enc->inc_ref();
+        encoding[ex] = enc;
+        return;
+    }
+
+    expr * Z = mk_fresh_array("Z");
+    std::vector<expr*> andargs;
     // reachability creates all r_i^Z (prev_reach)
     // -> B must be defined before A otherwise prev_reach is empty
     andargs.push_back( pe.mk_reachability(Z,prev_reach, stops, list_locs, bounds.n_list) );
@@ -350,8 +368,6 @@ void slstar_encoder::add_tree(expr * ex, expr * const * args, unsigned num) {
     enc->is_spatial = true;
 
     expr * xenc;
-
-    expr * Z = mk_fresh_array("Z");
     std::vector<func_decl*> prev_reach;
     std::vector<expr*> dpred;
     std::vector<expr*> stops;
@@ -369,11 +385,28 @@ void slstar_encoder::add_tree(expr * ex, expr * const * args, unsigned num) {
             stops.push_back( mk_encoded_loc(args[i]));
         }
     }
+
+    tree_encoder pe(*this);
+    if(bounds.n_tree == 0) {
+        enc->B = pe.mk_defineY(enc,nullptr);
+        /* data predicates are trivally true, since we got an empty list */
+        if(stops.size() == 0){
+            enc->A = m.mk_eq(xenc, enc_null);
+        } else if(stops.size() == 1){
+            enc->A = m.mk_and(m.mk_eq(xenc, enc_null), m.mk_eq(stops[0],enc_null));
+        } else {
+            enc->A = m.mk_false();
+        }
+        enc->inc_ref();
+        encoding[ex] = enc;
+        return;
+    }
+
+    expr * Z = mk_fresh_array("Z");
     std::vector<expr*> andargs;
     // reachability creates all r_i^Z (prev_reach)
     // -> B must be defined before A otherwise prev_reach is empty
 
-    tree_encoder pe(*this);
     andargs.push_back( pe.mk_reachability(Z,prev_reach, stops, tree_locs, bounds.n_tree) );
     andargs.push_back( pe.mk_footprint(xenc,Z,tree_locs,prev_reach, stops) );
     andargs.push_back( pe.mk_defineY(enc,Z) );

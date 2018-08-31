@@ -40,6 +40,7 @@ class slstar_encoder {
     friend class pred_encoder;
     friend class list_encoder;
     friend class tree_encoder;
+    friend class slstar_model_converter;
 protected:
     ast_manager            & m;
     bool_rewriter            m_boolrw;
@@ -55,16 +56,17 @@ protected:
 
     std::map<expr*,sl_enc*>  encoding;
     std::map<expr*,app*>     locencoding;
+    std::set<std::string>    encoded_const_names;
 #if defined(Z3DEBUG)
     std::set<expr*>          encodedlocs;
 #endif
     std::vector<expr*>       list_locs;
     std::vector<expr*>       tree_locs;
 
-    expr                   * Xn = nullptr;
-    expr                   * Xl = nullptr;
-    expr                   * Xr = nullptr;
-    expr                   * Xd = nullptr;
+    app                    * Xn = nullptr;
+    app                    * Xl = nullptr;
+    app                    * Xr = nullptr;
+    app                    * Xd = nullptr;
     app                    * enc_null = nullptr;
 public:
     slstar_util              util;

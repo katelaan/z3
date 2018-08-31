@@ -77,6 +77,18 @@
             "file": "simple/list_ptox.smt2",
             "traces": [],
             "stdout":"sat\n"
+        },
+        {
+            "name": "ListSegNull",
+            "file": "simple/list_seg_null.smt2",
+            "traces": [],
+            "stdout":"sat\n"
+        },
+        {
+            "name": "TreeSegNull",
+            "file": "simple/tree_seg_null.smt2",
+            "traces": [],
+            "stdout":"sat\n"
         }
     ]
 }
