@@ -39,14 +39,13 @@ slstar_encoder::slstar_encoder(ast_manager & m) : m(m),  m_boolrw(m), util(m), m
 }
 
 app * slstar_encoder::mk_global_constraints() {
-    if(!bounds.contains_calls) {
-        return m.mk_true();
-    }
+    //if(!bounds.contains_calls) {
+    //    return m.mk_true();
+    //}
     expr * unionargs[] = {Xn,Xl,Xr,Xd};
     expr * X = m.mk_fresh_const("X", m_array_sort);
 
     expr * unionargsLR[] = {Xl,Xr}; 
-    expr * Xlr = mk_union(unionargsLR,2); //unionargs+1; TODOsl test
     std::vector<expr*> andargs;
 
     std::vector<expr*> locs;
@@ -54,9 +53,12 @@ app * slstar_encoder::mk_global_constraints() {
     locs.insert(locs.end(), tree_locs.begin(), tree_locs.end());
     
     andargs.push_back( m.mk_eq(X,mk_union(unionargs,4)) );
-    andargs.push_back( m.mk_not(mk_is_element(enc_null, X)) );
     andargs.push_back( mk_subset_eq(X, mk_set_from_elements(&locs[0], locs.size())) );
-    andargs.push_back( mk_is_empty( mk_intersect(Xn,Xlr)) );
+    if(bounds.contains_calls) {
+        andargs.push_back( m.mk_not(mk_is_element(enc_null, X)) );
+        expr * Xlr = mk_union(unionargsLR,2); //unionargs+1; TODOsl test
+        andargs.push_back( mk_is_empty( mk_intersect(Xn,Xlr)) );
+    }
     return m.mk_and(andargs.size(), &andargs[0]);
 }
 
@@ -544,7 +546,7 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
     enc->is_spatial = true;
 
     expr * x = mk_encoded_loc(args[0]);
-    expr * y = mk_encoded_loc(args[1]);
+    expr * y = args[1];
 
     expr* f_dat_x = m.mk_app(f_dat,x);
     enc->A = m.mk_and(m.mk_eq(f_dat_x,y), m.mk_not(m.mk_eq(x, enc_null )));

@@ -319,9 +319,9 @@ class slstar_tactic : public tactic {
                     //}
                 //}
             }
-            if(bd.contains_calls) {
+            //if(bd.contains_calls) {
                 g->assert_expr(m_encoder.mk_global_constraints());
-            }
+            //}
 
             if (g->models_enabled())
                 mc = alloc(slstar_model_converter, m, m_encoder);
