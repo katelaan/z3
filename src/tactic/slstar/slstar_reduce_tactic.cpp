@@ -302,7 +302,6 @@ class slstar_tactic : public tactic {
                 //    new_pr     = m.mk_modus_ponens(pr, new_pr);
                 //}
                 g->update(idx, new_curr, nullptr, g->dep(idx));
-                m_encoder.clear_enc_dict();
 
                 //if (is_app(new_curr)) {
                     //const app * a = to_app(new_curr.get());
