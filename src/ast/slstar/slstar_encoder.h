@@ -54,7 +54,7 @@ protected:
     func_decl              * f_left = nullptr;
     func_decl              * f_right = nullptr;
 
-    //std::map<expr*,sl_enc*>  encoding;
+    std::map<expr*,sl_enc*>  encoding;
     std::map<expr*,app*>     locencoding;
     std::set<std::string>    encoded_const_names;
 #if defined(Z3DEBUG)
@@ -91,33 +91,34 @@ public:
     app * mk_encoded_loc(expr * ex);
     app * mk_global_constraints();
 
+    void clear_enc_dict();
     void clear_loc_vars();
     void clear_X_vector();
 
     void prepare(sl_bounds bd);
     void encode_top(expr * current, expr_ref & new_ex);
-    sl_enc * encode(expr * ex);
+    void encode(expr * ex);
 
-    sl_enc * encode_tree(expr * ex, expr * const * args, unsigned num);
-    sl_enc * encode_list(expr * ex, expr * const * args, unsigned num);
-    sl_enc * encode_const(expr * ex);
-    sl_enc * encode_floc_fdat(expr * ex, expr * const * args, sl_enc ** encargs, unsigned num);  /* T_N^s */
-    sl_enc * encode_eq(expr * ex, expr * const * args, sl_enc ** encargs, unsigned num);         /* T_N^s */
-    sl_enc * encode_distinct(expr * ex, expr * const * args, sl_enc ** encargs, unsigned num);   /* T_N^s */
-    sl_enc * encode_pton(expr * ex, expr * const * args,  unsigned num);  /* T_N^s */
-    sl_enc * encode_ptol(expr * ex, expr * const * args,  unsigned num);  /* T_N^s */
-    sl_enc * encode_ptor(expr * ex, expr * const * args,  unsigned num);  /* T_N^s */
-    sl_enc * encode_ptod(expr * ex, expr * const * args,  unsigned num);  /* T_N^s */
-    sl_enc * encode_ptolr(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
-    sl_enc * encode_sep(expr * ex, expr * const * args, sl_enc ** encargs, unsigned num);    /* T_N^s */
+    void add_tree(expr * ex, expr * const * args, unsigned num);
+    void add_list(expr * ex, expr * const * args, unsigned num);
+    void add_const(expr * ex);
+    void add_floc_fdat(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
+    void add_eq(expr * ex, expr * const * args, unsigned num);         /* T_N^s */
+    void add_distinct(expr * ex, expr * const * args, unsigned num);   /* T_N^s */
+    void add_pton(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
+    void add_ptol(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
+    void add_ptor(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
+    void add_ptod(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
+    void add_ptolr(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
+    void add_sep(expr * ex, expr * const * args, unsigned num);    /* T_N^s */
 
-    sl_enc * encode_not(expr * ex, expr * const * args, sl_enc ** encargs, unsigned num);     /* T_N^b */
-    sl_enc * encode_and(expr * ex, expr * const * args, sl_enc ** encargs, unsigned num);     /* T_N^b */
-    sl_enc * encode_or(expr * ex, expr * const * args, sl_enc ** encargs, unsigned num);     /* T_N^b */
+    void add_not(expr * ex, expr * const * args, unsigned num);     /* T_N^b */
+    void add_and(expr * ex, expr * const * args, unsigned num);     /* T_N^b */
+    void add_or(expr * ex, expr * const * args, unsigned num);     /* T_N^b */
 
 private:
-    bool is_any_spatial(sl_enc ** encargs, unsigned num);
-    bool is_any_rewritten(sl_enc ** encargs, unsigned num);
+    bool is_any_spatial(expr * const * args, unsigned num);
+    bool is_any_rewritten(expr * const * args, unsigned num);
 };
 
 class sl_enc{
