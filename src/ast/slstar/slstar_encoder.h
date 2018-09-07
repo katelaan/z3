@@ -47,7 +47,9 @@ protected:
     sl_bounds                bounds;
 
     sort                   * m_array_sort = nullptr;
-    sort                   * m_int_sort = nullptr;
+    //sort                   * m_int_sort = nullptr;
+    sort                   * m_loc_sort = nullptr;
+    sort                   * m_data_sort = nullptr;
 
     func_decl              * f_next = nullptr;
     func_decl              * f_dat = nullptr;
@@ -72,7 +74,7 @@ public:
     slstar_util              util;
     array_util               m_arrayutil;
 
-    slstar_encoder(ast_manager & m);
+    slstar_encoder(ast_manager & m, sort * loc_sort, sort * data_sort);
     ~slstar_encoder();
 
     app * mk_fresh_array(char const * prefix);

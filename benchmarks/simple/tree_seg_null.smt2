@@ -1,5 +1,5 @@
 (set-logic SLSTAR)
 
-(assert  (tree tree.null tree.null))
+(assert  (tree (as null TreeLoc) (as null TreeLoc)))
 
 (check-sat)

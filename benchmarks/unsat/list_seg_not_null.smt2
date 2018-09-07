@@ -2,8 +2,8 @@
 (declare-const x ListLoc)
 
 (assert  (sep 
-    (list list.null x)
-    (distinct x list.null)    
+    (list (as null ListLoc) x)
+    (distinct x (as null ListLoc))    
 ))
 
 (check-sat)

@@ -2,6 +2,6 @@
 (declare-const x TreeLoc)
 (declare-const y TreeLoc)
 
-(assert (tree tree.null x y) )
+(assert (tree (as null TreeLoc) x y) )
 
 (check-sat)

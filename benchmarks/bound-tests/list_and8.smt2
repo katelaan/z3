@@ -8,5 +8,5 @@
     (sep 
       (list x) 
       (list y)
-      (distinct y list.null) )))
+      (distinct y (as null ListLoc)) )))
 (check-sat)

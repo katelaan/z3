@@ -28,7 +28,7 @@ app * pred_encoder::mk_reach1(expr * Z,
         std::vector<expr*> & xlocs, 
         std::vector<expr*> & stops) 
 {
-    sort * const domain[] = {enc.m_int_sort, enc.m_int_sort}; //TODOsl configurable Loc-Sort
+    sort * const domain[] = {enc.m_loc_sort, enc.m_loc_sort};
     func_decl * reach = m.mk_fresh_func_decl("r1", 2, domain, m.mk_bool_sort());
     
     std::vector<expr*> andargs;
@@ -44,7 +44,7 @@ app * pred_encoder::mk_reach1(expr * Z,
     return m.mk_and(andargs.size(), &andargs[0]);
 }
 app * pred_encoder::mk_reachN(std::vector<func_decl*> & prev_reach, std::vector<expr*> & xlocs) {
-    sort * const domain[] = {enc.m_int_sort, enc.m_int_sort}; //TODOsl configurable Loc-Sort
+    sort * const domain[] = {enc.m_loc_sort, enc.m_loc_sort};
     std::string reachName = "r";
     reachName += std::to_string((prev_reach.size()+1));
     func_decl * reach = m.mk_fresh_func_decl(reachName.c_str(), 2, domain, m.mk_bool_sort());

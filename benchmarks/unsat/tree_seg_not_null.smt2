@@ -2,8 +2,8 @@
 (declare-const x TreeLoc)
 
 (assert  (sep 
-    (tree tree.null x) 
-    (distinct x tree.null)    
+    (tree (as null TreeLoc) x) 
+    (distinct x (as null TreeLoc))    
 ))
 
 (check-sat)

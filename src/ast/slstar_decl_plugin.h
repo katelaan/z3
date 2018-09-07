@@ -23,8 +23,7 @@ enum slstar_op_kind {
     OP_SLSTAR_POINTSTOD,
     OP_SLSTAR_TREE,
     OP_SLSTAR_LIST,
-    OP_SLSTAR_LISTNULL,
-    OP_SLSTAR_TREENULL,
+    OP_SLSTAR_NULL,
 
     OP_SLSTAR_UNARY,
     OP_SLSTAR_LEFT,
@@ -41,6 +40,9 @@ private:
     sort *              m_int_sort;
     sort *              m_dpred_sort;
 
+    void check_loc_sort(unsigned arity, sort * const * domain, unsigned arg_ptr);
+    void check_data_sort(unsigned num_parameters, parameter const * parameters);
+    func_decl * mk_null_func_decl(decl_kind k, sort * range);
     func_decl * mk_support_decl(symbol name, decl_kind k, unsigned num_parameters, 
                                     parameter const * parameters, unsigned arity,
                                     sort * const * domain, sort * range);
@@ -59,6 +61,9 @@ private:
 public:
 
     decl_plugin * mk_fresh();
+
+    static sort * get_loc_sort(ast_manager * m);
+    static sort * get_data_sort(ast_manager * m);
 
     sort * mk_slstar_tree(unsigned num_parameters, parameter const * parameters);
     sort * mk_slstar_list(unsigned num_parameters, parameter const * parameters);
@@ -124,7 +129,7 @@ public:
     bool is_treeloc(sort const * s);
     bool is_dpred(sort const * s);
 
-    app * mk_null(decl_kind k, unsigned num_parameters = 0, const parameter * params = nullptr) ;
+    app * mk_null(sort * nullsort) ;
 
     unsigned int num_stop_nodes(expr const * t);
 };

@@ -23,7 +23,6 @@ class slstar_tactic : public tactic {
     struct imp {
         ast_manager &     m;
         slstar_util       util;
-        slstar_encoder    m_encoder;
 
         bool              m_proofs_enabled;
         bool              m_produce_models;
@@ -32,7 +31,6 @@ class slstar_tactic : public tactic {
         imp(ast_manager & _m, params_ref const & p):
             m(_m),
             util(m),
-            m_encoder(m),
             m_proofs_enabled(false),
             m_produce_models(false),
             m_produce_unsat_cores(false) {
@@ -289,20 +287,26 @@ class slstar_tactic : public tactic {
             }
 
             expr_ref   new_curr(m);
-            m_encoder.prepare(bd);
+
+            sort * data_sort = slstar_decl_plugin::get_data_sort(&m);
+            sort * loc_sort = slstar_decl_plugin::get_loc_sort(&m);
+            slstar_encoder    encoder(m, loc_sort, data_sort );
+            m.dec_ref(data_sort);
+            m.dec_ref(loc_sort);
+            encoder.prepare(bd);
             //proof_ref  new_pr(m);
             unsigned size = g->size();
             for (unsigned idx = 0; idx < size; idx++) {
                 if (g->inconsistent())
                     break;
                 expr * curr = g->form(idx);
-                m_encoder.encode_top(curr, new_curr);
+                encoder.encode_top(curr, new_curr);
                 //if (m_proofs_enabled) {
                 //    proof * pr = g->pr(idx);
                 //    new_pr     = m.mk_modus_ponens(pr, new_pr);
                 //}
                 g->update(idx, new_curr, nullptr, g->dep(idx));
-                m_encoder.clear_enc_dict();
+                encoder.clear_enc_dict();
 
                 //if (is_app(new_curr)) {
                     //const app * a = to_app(new_curr.get());
@@ -320,11 +324,11 @@ class slstar_tactic : public tactic {
                 //}
             }
             //if(bd.contains_calls) {
-                g->assert_expr(m_encoder.mk_global_constraints());
+                g->assert_expr(encoder.mk_global_constraints());
             //}
 
             if (g->models_enabled())
-                mc = alloc(slstar_model_converter, m, m_encoder);
+                mc = alloc(slstar_model_converter, m, encoder);
 
             g->inc_depth();
             result.push_back(g.get());
