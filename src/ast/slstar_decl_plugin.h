@@ -40,8 +40,10 @@ private:
     sort *              m_int_sort;
     sort *              m_dpred_sort;
 
-    void check_loc_sort(unsigned arity, sort * const * domain, unsigned arg_ptr);
-    void check_data_sort(unsigned num_parameters, parameter const * parameters);
+    std::vector<parameter> check_call_sort_params(unsigned num_parameters, parameter const * parameters);
+    void set_loc_sort( sort * &lhs , sort * rhs );
+    void check_loc_sort( sort * sort);
+
     func_decl * mk_null_func_decl(decl_kind k, sort * range);
     func_decl * mk_support_decl(symbol name, decl_kind k, unsigned num_parameters, 
                                     parameter const * parameters, unsigned arity,
