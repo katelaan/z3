@@ -41,8 +41,11 @@
             "name": "Python: Runtests",
             "type": "python",
             "request": "launch",
+            "env":{
+                "LD_LIBRARY_PATH" : "/home/skrulj/z3/install/lib64"
+            },
             "program": "${workspaceFolder}/tools/runtest.py",
-            "args": ["${workspaceFolder}/testdef/simple.json"],
+            "args": ["${workspaceFolder}/testdef/model.json"],
             "cwd": "${workspaceFolder}/testdef"
         }
     ]

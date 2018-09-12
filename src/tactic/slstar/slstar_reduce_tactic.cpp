@@ -307,25 +307,10 @@ class slstar_tactic : public tactic {
                 //}
                 g->update(idx, new_curr, nullptr, g->dep(idx));
                 encoder.clear_enc_dict();
-
-                //if (is_app(new_curr)) {
-                    //const app * a = to_app(new_curr.get());
-                    //if (a->get_family_id() == m_conv.fu().get_family_id() &&
-                    //    a->get_decl_kind() == OP_FPA_IS_NAN) {
-                    //     Inject auxiliary lemmas that fix e to the one and only NaN value,
-                    //     that is (= e (fp #b0 #b1...1 #b0...01)), so that the value propagation
-                    //     has a value to propagate.
-                    //    expr * sgn, *sig, *exp;
-                    //    m_conv.split_fp(new_curr, sgn, exp, sig);
-                    //    result.back()->assert_expr(m.mk_eq(sgn, m_conv.bu().mk_numeral(0, 1)));
-                    //    result.back()->assert_expr(m.mk_eq(exp, m_conv.bu().mk_bv_neg(m_conv.bu().mk_numeral(1, m_conv.bu().get_bv_size(exp)))));
-                    //    result.back()->assert_expr(m.mk_eq(sig, m_conv.bu().mk_numeral(1, m_conv.bu().get_bv_size(sig))));
-                    //}
-                //}
             }
-            //if(bd.contains_calls) {
+            if(bd.contains_calls) {
                 g->assert_expr(encoder.mk_global_constraints());
-            //}
+            }
 
             if (g->models_enabled())
                 mc = alloc(slstar_model_converter, m, encoder);

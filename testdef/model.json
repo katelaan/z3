@@ -1,0 +1,19 @@
+{
+    "testdefs": [
+        {
+            "name": "list_seg_null",
+            "file": "model/list_seg_null.smt2",
+            "traces": [],
+            "model": [
+                "(= x null)",
+                "(not (select Xn x))"
+            ]
+        },
+        {
+            "name": "pton",
+            "file": "model/pton.smt2",
+            "traces": [],
+            "model": []
+        }
+    ]
+}

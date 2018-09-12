@@ -8,7 +8,8 @@
 
 class slstar_model_converter : public model_converter {
     ast_manager & m;
-    std::set<std::string>       loc_constants;
+    std::set<app*>              loc_constants;
+    std::set<std::string>       loc_constants_names;
     std::vector<expr*>          list_locs;
     std::vector<expr*>          tree_locs;
 
@@ -51,6 +52,7 @@ protected:
     bool is_footprint_decl_tree(func_decl * decl);
     bool is_footprint_fld(func_decl * decl);
     expr * gather_elements(std::vector<expr*> & locs, func_decl * decl, model * mc);
+    void check_single_loc(std::vector<expr*> & elements, expr * loc, func_decl * Xdecl, model * mc);
 };
 
 class isless {

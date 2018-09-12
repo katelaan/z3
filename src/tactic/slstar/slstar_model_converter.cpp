@@ -3,7 +3,7 @@
 
 slstar_model_converter::slstar_model_converter(ast_manager & m, slstar_encoder & enc):
     m(m),
-    loc_constants(enc.encoded_const_names),
+    loc_constants(enc.encoded_const),
     list_locs(enc.list_locs),
     tree_locs(enc.tree_locs)
 {
@@ -23,6 +23,12 @@ slstar_model_converter::slstar_model_converter(ast_manager & m, slstar_encoder &
     for(auto it=tree_locs.begin(); it!=tree_locs.end(); it++) {
         m.inc_ref(*it);
     }
+    for(auto it=loc_constants.begin(); it!=loc_constants.end(); it++) {
+        m.inc_ref(*it);
+        func_decl * decl = (*it)->get_decl();
+        std::string name = decl->get_name().bare_str();
+        loc_constants_names.emplace(name);
+    }
 }
 
 slstar_model_converter::~slstar_model_converter(){
@@ -30,6 +36,9 @@ slstar_model_converter::~slstar_model_converter(){
         m.dec_ref(*it);
     }
     for(auto it=tree_locs.begin(); it!=tree_locs.end(); it++) {
+        m.dec_ref(*it);
+    }    
+    for(auto it=loc_constants.begin(); it!=loc_constants.end(); it++) {
         m.dec_ref(*it);
     }
 }
@@ -51,15 +60,12 @@ void slstar_model_converter::convert(model * mc, model * mdl) {
         func_decl * c = mc->get_constant(i);
         std::string name = c->get_name().bare_str();
         std::string rname = name;
-        if(name.substr(0,9) == "list.null" /*|| name.substr(0,9) == "tree.null"*/){
-            register_const("null", c, mc, mdl);
-            continue;
-        }
+
         int char_pos = name.find_last_of('!');
         if(char_pos != -1){
             rname = name.substr(0,char_pos);
         }
-        if(loc_constants.find(name) != loc_constants.end() ){
+        if(loc_constants_names.find(name) != loc_constants_names.end() || rname == "null"){
             register_const(rname, c, mc, mdl);
             continue;
         }
@@ -88,39 +94,39 @@ void slstar_model_converter::convert(model * mc, model * mdl) {
     }
 }
 
+void slstar_model_converter::check_single_loc(std::vector<expr*> & elements, expr * loc, func_decl * Xdecl, model * mc) {
+    expr_ref   result(m);
+
+    parameter p = to_app(mc->get_const_interp(Xdecl))->get_decl()->get_parameter(0);
+    func_decl * array_decl = (func_decl*) to_decl(p.get_ast());
+    
+    model_evaluator ev(*mc);
+    ev.set_model_completion(true);
+    expr * e = m.mk_app(array_decl, loc);
+    ev(e, result);
+    m.inc_ref(e);
+    m.dec_ref(e);
+    if(m.is_true(result.get())) {
+        try {
+            ev(loc, result);
+            elements.push_back(result.get());
+        } catch (model_evaluator_exception & ex) {
+            (void)ex;
+            SASSERT(false);
+        }
+    }
+}
+
 expr * slstar_model_converter::gather_elements(std::vector<expr*> & locs, func_decl * Xdecl, model * mc) {
     std::vector<expr*> elements;
-    expr_ref   result(m);
-    //model_evaluator ev(*mc);
-    //ev.set_expand_array_equalities(true);
-    //try {
-    //    ev(Xdd,result);
-    //    return result.get();
-    //} catch (model_evaluator_exception & ex) {
-    //    (void)ex;
-    //    return nullptr;
-    //}
 
+    // check tree/list locations X={x1,x2,...,xN}
     for(auto it=locs.begin(); it != locs.end(); it++){
-        //elements.push_back( mc->get_const_interp( to_app(*it)->get_decl()) );
-        parameter p = to_app(mc->get_const_interp(Xdecl))->get_decl()->get_parameter(0);
-        func_decl * array_decl = (func_decl*) to_decl(p.get_ast());
-        
-        model_evaluator ev(*mc);
-        ev.set_model_completion(true);
-        expr * e = m.mk_app(array_decl, *it);
-        ev(e, result);
-        m.inc_ref(e);
-        m.dec_ref(e);
-        if(m.is_true(result.get())) {
-            try {
-                ev(*it, result);
-                elements.push_back(result.get());
-            } catch (model_evaluator_exception & ex) {
-                (void)ex;
-                SASSERT(false);
-            }
-        }
+        check_single_loc(elements, *it, Xdecl, mc);
+    }
+    // check locations defined as constants in formula
+    for(auto it=loc_constants.begin(); it != loc_constants.end(); it++){
+        check_single_loc(elements, *it, Xdecl, mc);
     }
 
     std::sort(elements.begin(), elements.end(), isless(m,mc));

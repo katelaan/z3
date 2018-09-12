@@ -3,6 +3,7 @@ import sys, os
 import subprocess as sp
 import re, difflib
 import json
+import z3
 
 Z3_BIN = '../build/z3'
 
@@ -20,6 +21,8 @@ ASSERT_DEF = r"[\s]+([a-zA-Z0-9-_]+) ((.*?;)+)"
 
 TRACESTART = r"-------- \[([a-zA-Z_-]+)][ a-zA-Z_()]*([.\/a-zA-Z_]+):([0-9]+) ---------"
 TRACEEND = r"------------------------------------------------"
+
+Z3_ARRAY_DEF = r"^\s*\(define-fun ([A-Za-z]+) \(\) Array$$"
 
 PATHPREFIX = '../benchmarks/'
 
@@ -94,7 +97,8 @@ class Test(object):
     def __init__(self):
         self.smtfile = ""
         self.name = ""
-        self.stdout = ""
+        self.stdout = None
+        self.model = None
         self.traces = []
 
     def runtest(self):
@@ -108,18 +112,8 @@ class Test(object):
         p = sp.Popen([Z3_BIN, self.smtfile] + list(traces), stdout=sp.PIPE)
         stdout_is = p.stdout.read().decode("utf-8")
         
-        stdout_is_list = stdout_is.splitlines(keepends=True)
-        diff = list( difflib.ndiff(self.stdout, stdout_is_list) )
+        self.test_stdout(stdout_is)
 
-        if len(diff) > 1 or len(stdout_is_list) != len(self.stdout):
-            sys.stdout.write("  "*1 + "stdout: " + FAIL+"FAIL"+ENDC + "\n")
-            
-            print("+++ stdout_is\n--- stdout_expected")
-            print(''.join(diff), end="")
-            print("--------")
-
-        else:
-            sys.stdout.write("  "*1 + "stdout: " + GREEN+"OK"+ENDC + "\n")
         try:
             f = open(".z3-trace")
         except:
@@ -128,6 +122,79 @@ class Test(object):
         for trace in self.traces:
             trace.test(read_next_tag(f))
         f.close()
+
+    def test_stdout(self, stdout_is):
+        if(self.model):
+            self.stdout_test_model(stdout_is)
+        elif(self.stdout):
+            self.stdout_diff(stdout_is)
+    
+    def stdout_diff(self,stdout_is):
+        stdout_is_list = stdout_is.splitlines(keepends=True)
+        self.stdout = self.stdout.splitlines(keepends=True)
+        diff = list( difflib.ndiff(self.stdout, stdout_is_list) )
+
+        if len(diff) > 1 or len(stdout_is_list) != len(self.stdout):
+            sys.stdout.write("  "*1 + "stdout: " + FAIL+"FAIL"+ENDC + "\n")
+            
+            print("+++ stdout_is\n--- stdout_expected")
+            print(''.join(diff), end="")
+            print("--------")
+        else:
+            sys.stdout.write("  "*1 + "stdout: " + GREEN+"OK"+ENDC + "\n")
+
+    def stdout_test_model(self,stdout_is):
+        
+        sys.stdout.write("  "*1 + "model: ")
+        if not stdout_is.startswith("sat\n(model \n"):
+            sys.stdout.write(FAIL+"FAIL"+ENDC + " could not parse model\n")
+            return
+        sys.stdout.write('\n')
+        
+        model_lines = stdout_is[12:-2].split('\n')
+        next_line_is_def = False
+        # translate array definitions to store calls
+        for i,line in enumerate(model_lines):
+            if next_line_is_def:
+                tt = dict.fromkeys(map(ord, '()'), '')
+                nums = line.translate(tt)
+                nums = [x for x in nums if x != ' '] #remove ' ' elements
+                expr = "((as const (Array Int Bool)) false)"
+                for num in nums:
+                    expr = "(store " + expr + " " + num + "true)"
+                expr += ")"
+                model_lines[i] = expr
+                next_line_is_def = False
+            else:
+                m = re.match(Z3_ARRAY_DEF, line)
+                if m:
+                    model_lines[i] = "(define-fun {} () (Array Int Bool) ".format(m.group(1))
+                    next_line_is_def = True
+        modelstring = "\n".join(model_lines)
+
+        try:
+            for model_assertion in self.model:
+                sys.stdout.write("  "*2 + model_assertion + ": ")
+                tmp = modelstring + "\n" + "(assert (not {}))".format(model_assertion)
+                expr = z3.parse_smt2_string(tmp)
+                if(z3.is_true(expr)):
+                     sys.stdout.write(GREEN+"OK"+ENDC + "\n")
+                else:
+                    s = z3.Solver()
+                    s.add(expr)
+                    result = s.check()
+                    if result == z3.unsat:
+                        sys.stdout.write(GREEN+"OK"+ENDC + "\n")
+                    elif result == z3.sat:
+                        sys.stdout.write(FAIL+"FAIL"+ENDC + "\n")
+                    else:
+                        sys.stdout.write(WARN+"INCONCLUSIVE"+ENDC + "\n")
+        except z3.Z3Exception as e:
+            sys.stderr.write("{}".format(e))
+            sys.stderr.write("\n")
+        sys.stdout.write('\n')
+        
+
 
 class TraceOut(object):
     def __init__(self):
@@ -162,10 +229,10 @@ def read_tests(f):
         t = Test()
         t.name = testdef['name']
         t.smtfile = PATHPREFIX + testdef['file']
-        if type(testdef['stdout']) == str:
-            t.stdout = testdef['stdout'].splitlines(keepends=True)
-        else:
+        if('stdout' in testdef):
             t.stdout = testdef['stdout']
+        elif('model' in testdef):
+            t.model = testdef['model']
         t.traces = read_traces(testdef)
         tests.append(t)
     return tests

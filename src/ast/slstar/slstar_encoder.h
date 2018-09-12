@@ -58,7 +58,7 @@ protected:
 
     std::map<expr*,sl_enc*>  encoding;
     std::map<expr*,app*>     locencoding;
-    std::set<std::string>    encoded_const_names;
+    std::set<app*>           encoded_const;
 #if defined(Z3DEBUG)
     std::set<expr*>          encodedlocs;
 #endif

@@ -40,9 +40,9 @@ slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort, sort * data_sor
 }
 
 app * slstar_encoder::mk_global_constraints() {
-    //if(!bounds.contains_calls) {
-    //    return m.mk_true();
-    //}
+    if(!bounds.contains_calls) {
+        return m.mk_true();
+    }
     expr * unionargs[] = {Xn,Xl,Xr,Xd};
     expr * X = m.mk_fresh_const("X", m_array_sort);
 
@@ -279,8 +279,7 @@ app * slstar_encoder::mk_encoded_loc(expr * x) {
     app* xt = to_app(x);
     func_decl * fdec =xt->get_decl();
     app * fresh = m.mk_fresh_const(fdec->get_name().bare_str(), m_loc_sort);
-    std::string name = fresh->get_decl()->get_name().bare_str();
-    encoded_const_names.emplace(name);
+    encoded_const.emplace(fresh);
     locencoding[x] = fresh;
 #if defined(Z3DEBUG)
     encodedlocs.emplace(fresh); //TODOsl delete
