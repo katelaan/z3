@@ -1,8 +1,8 @@
 #ifndef SLSTAR_ENCODER_H_
 #define SLSTAR_ENCODER_H_
 
-#include <map>
-#include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include "ast/ast.h"
 #include "util/obj_hashtable.h"
 #include "util/ref_util.h"
@@ -47,20 +47,19 @@ protected:
     sl_bounds                bounds;
 
     sort                   * m_array_sort = nullptr;
-    //sort                   * m_int_sort = nullptr;
     sort                   * m_loc_sort = nullptr;
-    sort                   * m_data_sort = nullptr;
 
     func_decl              * f_next = nullptr;
-    func_decl              * f_dat = nullptr;
     func_decl              * f_left = nullptr;
     func_decl              * f_right = nullptr;
+    
+    std::unordered_map<sort*, func_decl*> f_dat_map;
 
-    std::map<expr*,sl_enc*>  encoding;
-    std::map<expr*,app*>     locencoding;
-    std::set<app*>           encoded_const;
+    std::unordered_map<expr*,sl_enc*>  encoding;
+    std::unordered_map<expr*,app*>     locencoding;
+    std::unordered_set<app*>           encoded_const;
 #if defined(Z3DEBUG)
-    std::set<expr*>          encodedlocs;
+    std::unordered_set<expr*>          encodedlocs;
 #endif
     std::vector<expr*>       list_locs;
     std::vector<expr*>       tree_locs;
@@ -74,7 +73,7 @@ public:
     slstar_util              util;
     array_util               m_arrayutil;
 
-    slstar_encoder(ast_manager & m, sort * loc_sort, sort * data_sort);
+    slstar_encoder(ast_manager & m, sort * loc_sort);
     ~slstar_encoder();
 
     app * mk_fresh_array(char const * prefix);
@@ -121,6 +120,7 @@ public:
 private:
     bool is_any_spatial(expr * const * args, unsigned num);
     bool is_any_rewritten(expr * const * args, unsigned num);
+    func_decl * get_f_dat(sort * sort);
 };
 
 class sl_enc{

@@ -2,16 +2,11 @@
 #include "ast/ast_ll_pp.h"
 #include "ast/ast_smt2_pp.h"
 
-slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort, sort * data_sort) : m(m),  m_boolrw(m), util(m), m_arrayutil(m) {
+slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort) : m(m),  m_boolrw(m), util(m), m_arrayutil(m) {
     auto fid = m.mk_family_id("arith");
 
     m_loc_sort = loc_sort;
     m.inc_ref(m_loc_sort);
-    m_data_sort = data_sort;
-    m.inc_ref(m_data_sort);
-
-    //m_int_sort = m.mk_sort(fid, INT_SORT);
-    //m.inc_ref(m_int_sort);
 
     vector<parameter> params;
     params.push_back(parameter(loc_sort)); //TODOsl configurable LocSort
@@ -20,14 +15,10 @@ slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort, sort * data_sor
     m_array_sort = m.mk_sort(fid, ARRAY_SORT, params.size(), params.c_ptr());
     m.inc_ref(m_array_sort);
 
-    //TODOsl configurable LocSort, DatSort
     sort * const domain[] = {loc_sort};
     
     f_next = m.mk_fresh_func_decl("f_next", 1, domain, loc_sort);
     m.inc_ref(f_next);
-
-    f_dat = m.mk_fresh_func_decl("f_dat", 1, domain, m_data_sort);
-    m.inc_ref(f_dat);
 
     f_left = m.mk_fresh_func_decl("f_left", 1, domain, loc_sort);
     m.inc_ref(f_left);
@@ -37,6 +28,26 @@ slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort, sort * data_sor
 
     enc_null = m.mk_fresh_const("null", m_loc_sort);
     m.inc_ref(enc_null);
+}
+
+func_decl * slstar_encoder::get_f_dat(sort * s){
+    auto i = f_dat_map.emplace(s, nullptr);
+
+    if (i.second) {
+        std::string name = s->get_name().bare_str();
+
+        TRACE("slstar_f_dat", 
+            tout <<  "new f_dat from Sort: " << name; 
+        );
+
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+        name = "f_dat_" + name;
+
+        sort * const domain[] = {m_loc_sort};
+        i.first->second = m.mk_fresh_func_decl(name.c_str(), 1, domain, s);
+        m.inc_ref(i.first->second);
+    }
+    return i.first->second;
 }
 
 app * slstar_encoder::mk_global_constraints() {
@@ -183,12 +194,14 @@ void slstar_encoder::clear_loc_vars(){
 slstar_encoder::~slstar_encoder() {
     if(m_array_sort) m.dec_ref(m_array_sort);
     if(m_loc_sort) m.dec_ref(m_loc_sort);
-    if(m_data_sort) m.dec_ref(m_data_sort);
 
     if(f_next) m.dec_ref(f_next);
-    if(f_dat) m.dec_ref(f_dat);
     if(f_left) m.dec_ref(f_left);
     if(f_right) m.dec_ref(f_right);
+
+    for(auto i = f_dat_map.begin(); i!=f_dat_map.end(); ++i) {
+        m.dec_ref(i->second);
+    }
 
     if(enc_null) m.dec_ref(enc_null);
 
@@ -550,9 +563,18 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
     expr * x = mk_encoded_loc(args[0]);
     expr * y = args[1];
 
+    app * tx = to_app(args[0]);
+    func_decl * x_decl = tx->get_decl();
+    SASSERT(x_decl->get_range()->get_num_parameters() == 2 );
+    const parameter& dat_sort_param = x_decl->get_range()->get_parameter(1);
+    SASSERT(dat_sort_param.is_ast());
+    SASSERT(is_sort(dat_sort_param.get_ast()));
+    sort * data_sort = to_sort(dat_sort_param.get_ast());
+
+    func_decl * f_dat = get_f_dat(data_sort);
+
     expr* f_dat_x = m.mk_app(f_dat,x);
     enc->A = m.mk_and(m.mk_eq(f_dat_x,y), m.mk_not(m.mk_eq(x, enc_null )));
-    
     
     expr * tmp = m.mk_eq(enc->Yd, mk_set_from_elements(&x,1));
     expr * const andargs[] = {tmp, mk_is_empty(enc->Yl), mk_is_empty(enc->Yr), mk_is_empty(enc->Yn) };

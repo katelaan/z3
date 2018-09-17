@@ -288,10 +288,8 @@ class slstar_tactic : public tactic {
 
             expr_ref   new_curr(m);
 
-            sort * data_sort = slstar_decl_plugin::get_data_sort(&m);
             sort * loc_sort = slstar_decl_plugin::get_loc_sort(&m);
-            slstar_encoder    encoder(m, loc_sort, data_sort );
-            m.dec_ref(data_sort);
+            slstar_encoder    encoder(m, loc_sort );
             m.dec_ref(loc_sort);
             encoder.prepare(bd);
             //proof_ref  new_pr(m);

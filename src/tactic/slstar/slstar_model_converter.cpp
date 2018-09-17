@@ -15,15 +15,18 @@ slstar_model_converter::slstar_model_converter(ast_manager & m, slstar_encoder &
     f_next_name = enc.f_next->get_name().bare_str();
     f_left_name = enc.f_left->get_name().bare_str();
     f_right_name = enc.f_right->get_name().bare_str();
-    f_dat_name = enc.f_dat->get_name().bare_str();
+    for(auto it=enc.f_dat_map.begin(); it!=enc.f_dat_map.end(); ++it ) {
+        std::string f_dat_name = it->second->get_name().bare_str();
+        f_dat_names.emplace(f_dat_name);
+    }
 
-    for(auto it=list_locs.begin(); it!=list_locs.end(); it++) {
+    for(auto it=list_locs.begin(); it!=list_locs.end(); ++it) {
         m.inc_ref(*it);
     }
-    for(auto it=tree_locs.begin(); it!=tree_locs.end(); it++) {
+    for(auto it=tree_locs.begin(); it!=tree_locs.end(); ++it) {
         m.inc_ref(*it);
     }
-    for(auto it=loc_constants.begin(); it!=loc_constants.end(); it++) {
+    for(auto it=loc_constants.begin(); it!=loc_constants.end(); ++it) {
         m.inc_ref(*it);
         func_decl * decl = (*it)->get_decl();
         std::string name = decl->get_name().bare_str();
@@ -90,7 +93,6 @@ void slstar_model_converter::convert(model * mc, model * mdl) {
             }
             register_func(name, f, mc, mdl); continue;
         }
-        //mdl->register_decl(f,mc->get_func_interp(f)); //TODOsl delete
     }
 }
 
@@ -176,11 +178,12 @@ bool slstar_model_converter::is_footprint_fld(func_decl * decl){
         return false;
     }
     std::string name = sym.bare_str();
+    bool is_f_dat_name = (f_dat_names.find(name) != f_dat_names.end());
     return
         name == f_next_name ||
         name == f_left_name ||
         name == f_right_name ||
-        name == f_dat_name;
+        is_f_dat_name;
 }
 
 

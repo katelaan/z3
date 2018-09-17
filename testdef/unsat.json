@@ -71,6 +71,12 @@
             "file": "unsat/tree_seg_null_x_y.smt2",
             "traces": [],
             "stdout":"unsat\n"
+        },
+        {
+            "name": "OneBitTwoConstants",
+            "file": "unsat/one_bit_two_const.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
         }
     ]
 }

@@ -65,7 +65,6 @@ public:
     decl_plugin * mk_fresh();
 
     static sort * get_loc_sort(ast_manager * m);
-    static sort * get_data_sort(ast_manager * m);
 
     sort * mk_slstar_tree(unsigned num_parameters, parameter const * parameters);
     sort * mk_slstar_list(unsigned num_parameters, parameter const * parameters);

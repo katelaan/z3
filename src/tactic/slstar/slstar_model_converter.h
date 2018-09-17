@@ -8,20 +8,20 @@
 
 class slstar_model_converter : public model_converter {
     ast_manager & m;
-    std::set<app*>              loc_constants;
-    std::set<std::string>       loc_constants_names;
-    std::vector<expr*>          list_locs;
-    std::vector<expr*>          tree_locs;
+    std::unordered_set<app*>              loc_constants;
+    std::unordered_set<std::string>       loc_constants_names;
+    std::vector<expr*>                    list_locs;
+    std::vector<expr*>                    tree_locs;
 
     std::string                  Xn_name;
     std::string                  Xl_name;
     std::string                  Xr_name;
     std::string                  Xd_name;
 
-    std::string                 f_next_name;
-    std::string                 f_left_name;
-    std::string                 f_right_name;
-    std::string                 f_dat_name;
+    std::string                           f_next_name;
+    std::string                           f_left_name;
+    std::string                           f_right_name;
+    std::unordered_set<std::string>       f_dat_names;
 
 public:
     slstar_model_converter(ast_manager & m, slstar_encoder & enc);

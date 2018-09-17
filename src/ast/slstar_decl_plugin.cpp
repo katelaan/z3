@@ -1,6 +1,5 @@
 #include "ast/slstar_decl_plugin.h"
 
-static sort * s_data_sort = nullptr; //specifies the sort of data: in '(ptod x y)' y is of said sort
 static sort * s_loc_sort = nullptr;  //specifies the sort of location encodings: the model for x in '(ptod x y)' is of said sort
 
 sort * slstar_decl_plugin::get_loc_sort(ast_manager * m) {
@@ -10,14 +9,6 @@ sort * slstar_decl_plugin::get_loc_sort(ast_manager * m) {
         m->inc_ref(s_loc_sort);
     }
     return s_loc_sort;    
-}
-sort * slstar_decl_plugin::get_data_sort(ast_manager * m) {
-    if( s_data_sort == nullptr ) {
-        auto m_arith_fid = m->mk_family_id("arith");
-        s_data_sort = m->mk_sort(m_arith_fid, INT_SORT);
-        m->inc_ref(s_data_sort);
-    }
-    return s_data_sort;    
 }
 
 
@@ -74,7 +65,6 @@ std::vector<parameter> slstar_decl_plugin::check_call_sort_params(unsigned num_p
                 break;
             }
             params.insert(params.begin(), parameters[1]);
-            break;
         case 1:
             if( !parameters[0].is_ast() || !is_sort(parameters[0].get_ast()) ){
                 m_manager->raise_exception("Loc parameter must be sort");
@@ -100,10 +90,6 @@ std::vector<parameter> slstar_decl_plugin::check_call_sort_params(unsigned num_p
         default:
             m_manager->raise_exception("Loc must not have more than two parameters");
             return params;
-    }
-    if(s_data_sort == nullptr) {
-        s_data_sort = m_int_sort; // TODOsl delete
-        m_manager->inc_ref(s_data_sort);
     }
 
     return params;
