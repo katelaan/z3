@@ -99,6 +99,7 @@ class Test(object):
         self.name = ""
         self.stdout = None
         self.model = None
+        self.loc_sort = "Int"
         self.traces = []
 
     def runtest(self):
@@ -157,18 +158,29 @@ class Test(object):
         for i,line in enumerate(model_lines):
             if next_line_is_def:
                 tt = dict.fromkeys(map(ord, '()'), '')
-                nums = line.translate(tt)
-                nums = [x for x in nums if x != ' '] #remove ' ' elements
-                expr = "((as const (Array Int Bool)) false)"
+                nums = line.translate(tt).split(" ")
+                nums = [x for x in nums if x != ''] #remove ' ' elements
+                nums_final = []
+                last_was_neg = False
                 for num in nums:
-                    expr = "(store " + expr + " " + num + "true)"
+                    if num == "-":
+                        last_was_neg
+                        continue
+                    if last_was_neg:
+                        nums_final.append( "(- " + num + ")" )
+                    else:
+                        nums_final.append(num)
+
+                expr = "((as const (Array {} Bool )) false)".format(self.loc_sort)
+                for num in nums_final:
+                    expr = "(store " + expr + " " + num + " true)"
                 expr += ")"
                 model_lines[i] = expr
                 next_line_is_def = False
             else:
                 m = re.match(Z3_ARRAY_DEF, line)
                 if m:
-                    model_lines[i] = "(define-fun {} () (Array Int Bool) ".format(m.group(1))
+                    model_lines[i] = "(define-fun {} () (Array {}  Bool) ".format(m.group(1), self.loc_sort)
                     next_line_is_def = True
         modelstring = "\n".join(model_lines)
 
@@ -229,10 +241,12 @@ def read_tests(f):
         t = Test()
         t.name = testdef['name']
         t.smtfile = PATHPREFIX + testdef['file']
-        if('stdout' in testdef):
+        if 'stdout' in testdef:
             t.stdout = testdef['stdout']
-        elif('model' in testdef):
+        elif 'model' in testdef:
             t.model = testdef['model']
+        if 'loc_sort' in testdef:
+            t.loc_sort = testdef['loc_sort']
         t.traces = read_traces(testdef)
         tests.append(t)
     return tests

@@ -3,6 +3,7 @@
         {
             "name": "bool_int",
             "file": "loc_data_sorts/bool_int.smt2",
+            "loc_sort": "Bool",
             "traces": [],
             "model": [
                 "(distinct x null)",
@@ -13,6 +14,7 @@
             "name": "bool_real",
             "file": "loc_data_sorts/bool_real.smt2",
             "traces": [],
+            "loc_sort": "Bool",
             "model": [
                 "(distinct x null)",
                 "(= (f_dat_real x) 0.5)"
@@ -23,6 +25,7 @@
             "name": "int_bool",
             "file": "loc_data_sorts/int_bool.smt2",
             "traces": [],
+            "dat_sort": "Bool",
             "model": [
                 "(distinct x null)",
                 "(f_dat_bool x)"
@@ -55,9 +58,9 @@
             "traces": [],
             "model": [
                 "(distinct x null)",
-                "(= (f_dat_int x) 0.5)",
+                "(= (f_dat_real x) 0.5)",
                 "(distinct y null)",
-                "(= (f_dat_int y) 0.5)"
+                "(= (f_dat_real y) 0.5)"
             ]
         },
 
