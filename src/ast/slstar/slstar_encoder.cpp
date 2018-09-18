@@ -2,6 +2,13 @@
 #include "ast/ast_ll_pp.h"
 #include "ast/ast_smt2_pp.h"
 
+const std::string slstar_encoder::Z_prefix = "__Z";
+const std::string slstar_encoder::Y_prefix = "__Y";
+const std::string slstar_encoder::reach_prefix = "__reach";
+const std::string slstar_encoder::X_prefix = "X";
+const std::string slstar_encoder::xl_prefix = "__xl";
+const std::string slstar_encoder::xt_prefix = "__xt";
+
 slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort) : m(m),  m_boolrw(m), util(m), m_arrayutil(m) {
     auto fid = m.mk_family_id("arith");
 
@@ -78,20 +85,20 @@ void slstar_encoder::prepare(sl_bounds bd) {
     SASSERT(list_locs.size()==0 && tree_locs.size()==0);
     bounds = bd;
     for(int i=0; i<bd.n_list; i++) {
-        app * fresh = m.mk_fresh_const("xl", m_loc_sort);
+        app * fresh = m.mk_fresh_const(xt_prefix.c_str(), m_loc_sort);
         m.inc_ref(fresh);
         list_locs.push_back(fresh);
     }
     for(int i=0; i<bd.n_tree; i++) {
-        app * fresh = m.mk_fresh_const("xt", m_loc_sort);
+        app * fresh = m.mk_fresh_const(xt_prefix.c_str(), m_loc_sort);
         m.inc_ref(fresh);
         tree_locs.push_back(fresh);
     }
 
-    Xn = mk_fresh_array("Xn");
-    Xl = mk_fresh_array("Xl");
-    Xr = mk_fresh_array("Xr");
-    Xd = mk_fresh_array("Xd");
+    Xn = mk_fresh_array( (X_prefix + "n").c_str());
+    Xl = mk_fresh_array( (X_prefix + "l").c_str());
+    Xr = mk_fresh_array( (X_prefix + "r").c_str());
+    Xd = mk_fresh_array( (X_prefix + "d").c_str());
 }
 
 void slstar_encoder::encode_top(expr * current, expr_ref & new_ex) {
@@ -342,7 +349,7 @@ void slstar_encoder::add_list(expr * ex, expr * const * args, unsigned num) {
         return;
     }
 
-    expr * Z = mk_fresh_array("Z");
+    expr * Z = mk_fresh_array(Z_prefix.c_str());
     std::vector<expr*> andargs;
     // reachability creates all r_i^Z (prev_reach)
     // -> B must be defined before A otherwise prev_reach is empty
@@ -419,7 +426,7 @@ void slstar_encoder::add_tree(expr * ex, expr * const * args, unsigned num) {
         return;
     }
 
-    expr * Z = mk_fresh_array("Z");
+    expr * Z = mk_fresh_array(Z_prefix.c_str());
     std::vector<expr*> andargs;
     // reachability creates all r_i^Z (prev_reach)
     // -> B must be defined before A otherwise prev_reach is empty
@@ -770,10 +777,10 @@ void sl_enc::mk_fresh_Y() {
     if(Yl) m.dec_ref(Yl);
     if(Yr) m.dec_ref(Yr);
     if(Yd) m.dec_ref(Yd);
-    Yn = enc.mk_fresh_array("Yn");
-    Yl = enc.mk_fresh_array("Yl");
-    Yr = enc.mk_fresh_array("Yr");
-    Yd = enc.mk_fresh_array("Yd");
+    Yn = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "n").c_str() );
+    Yl = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "l").c_str() );
+    Yr = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "r").c_str() );
+    Yd = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "d").c_str() );
 }
 
 void sl_enc::copy_Y(sl_enc * other) {

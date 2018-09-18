@@ -1,0 +1,71 @@
+{
+    "testdefs": [
+        {
+            "name": "bool_int",
+            "file": "loc_data_sorts/bool_int.smt2",
+            "traces": [],
+            "model": [
+                "(distinct x null)",
+                "(= (f_dat_int x) 5)"
+            ]
+        },
+        {
+            "name": "bool_real",
+            "file": "loc_data_sorts/bool_real.smt2",
+            "traces": [],
+            "model": [
+                "(distinct x null)",
+                "(= (f_dat_real x) 0.5)"
+            ]
+        },
+
+        {
+            "name": "int_bool",
+            "file": "loc_data_sorts/int_bool.smt2",
+            "traces": [],
+            "model": [
+                "(distinct x null)",
+                "(f_dat_bool x)"
+            ]
+        },
+        {
+            "name": "int_int",
+            "file": "loc_data_sorts/int_int.smt2",
+            "traces": [],
+            "model": [
+                "(distinct x null)",
+                "(= (f_dat_int x) 5)",
+                "(distinct y null)",
+                "(= (f_dat_int y) 5)"
+            ]
+        },
+        {
+            "name": "int_int2",
+            "file": "loc_data_sorts/int_int2.smt2",
+            "traces": [],
+            "model": [
+                "(distinct x null)",
+                "(= (f_dat_int x) 5)"
+            ]
+        },
+
+        {
+            "name": "int_real",
+            "file": "loc_data_sorts/int_real.smt2",
+            "traces": [],
+            "model": [
+                "(distinct x null)",
+                "(= (f_dat_int x) 0.5)",
+                "(distinct y null)",
+                "(= (f_dat_int y) 0.5)"
+            ]
+        },
+
+        {
+            "name": "wrong_sort",
+            "file": "loc_data_sorts/wrong_sort.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        }
+    ]
+}

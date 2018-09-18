@@ -1,9 +1,8 @@
 (set-logic SLSTAR)
-(define-sort BV () (_ BitVec 3))
 
-(declare-const x (ListLoc BV Real))
-(declare-const y (ListLoc BV Real))
-(declare-const z (ListLoc BV Real))
+(declare-const x (ListLoc Int Real))
+(declare-const y (ListLoc Int Real))
+(declare-const z (ListLoc Int Real))
 
 (assert (list (unary (= (as alpha Real) 0.5)) x ))
 

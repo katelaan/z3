@@ -9,8 +9,7 @@
 (assert (sep 
    (pton x y) 
    (ptod x 0.5)
-   (pton y z) 
-   (ptod y 0.5)
    ))
 
 (check-sat)
+(get-model)

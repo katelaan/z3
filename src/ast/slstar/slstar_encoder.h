@@ -70,6 +70,14 @@ protected:
     app                    * Xd = nullptr;
     app                    * enc_null = nullptr;
 public:
+    static const std::string Z_prefix;
+    static const std::string Y_prefix;
+    static const std::string reach_prefix;
+    static const std::string X_prefix;
+    static const std::string xl_prefix;
+    static const std::string xt_prefix;
+
+
     slstar_util              util;
     array_util               m_arrayutil;
 

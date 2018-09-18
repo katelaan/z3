@@ -77,6 +77,12 @@
             "file": "unsat/one_bit_two_const.smt2",
             "traces": [],
             "stdout":"unsat\n"
+        },
+        {
+            "name": "DataNotAllocated",
+            "file": "unsat/list-seg-and-not-alloc.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
         }
     ]
 }

@@ -20,7 +20,21 @@
             "name": "ptod1",
             "file": "model/ptod1.smt2",
             "traces": [],
-            "model": ["(= (f_dat_int x) d)"]
+            "model": ["(= (f_dat_int x) d)", "(distinct x null)"]
+        },
+
+        {
+            "name": "ptod2",
+            "file": "model/ptod2.smt2",
+            "traces": [],
+            "model": ["(= (f_dat_int x) d)", "(distinct x null)", "(= d 5)"]
+        },
+
+        {
+            "name": "ptod3",
+            "file": "model/ptod3.smt2",
+            "traces": [],
+            "model": ["(not (select Xd x))", "(= x null)"]
         }
     ]
 }

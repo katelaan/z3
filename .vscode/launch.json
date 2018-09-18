@@ -13,8 +13,8 @@
             //"args": ["benchmarks/examples-paper/binary-search-tree.smt2"],
             //"args": ["benchmarks/simple/simple_fp.smt2"],
             //"args": ["benchmarks/simple/simple_fp2.smt2"],
-            //"args": ["benchmarks/model/pton.smt2"],
-            "args": ["benchmarks/simple/tree_ptox.smt2"],
+            "args": ["benchmarks/model/ptod1.smt2"],
+            //"args": ["benchmarks/simple/tree_ptox.smt2"],
             //"args": ["benchmarks/unsat/tree_seg_null_null.smt2"],
             //"args": ["benchmarks/simple/test_list.smt2"],
             //"args": ["benchmarks/bound-tests/list_and8.smt2"],
@@ -45,7 +45,7 @@
                 "LD_LIBRARY_PATH" : "/home/skrulj/z3/install/lib64"
             },
             "program": "${workspaceFolder}/tools/runtest.py",
-            "args": ["${workspaceFolder}/testdef/model.json"],
+            "args": ["${workspaceFolder}/testdef/loc_data_sort.json"],
             "cwd": "${workspaceFolder}/testdef"
         }
     ]

@@ -29,7 +29,7 @@ app * pred_encoder::mk_reach1(expr * Z,
         std::vector<expr*> & stops) 
 {
     sort * const domain[] = {enc.m_loc_sort, enc.m_loc_sort};
-    func_decl * reach = m.mk_fresh_func_decl("r1", 2, domain, m.mk_bool_sort());
+    func_decl * reach = m.mk_fresh_func_decl(slstar_encoder::reach_prefix.c_str(), 2, domain, m.mk_bool_sort());
     
     std::vector<expr*> andargs;
     for(unsigned i=0; i<xlocs.size(); i++) {
@@ -45,9 +45,7 @@ app * pred_encoder::mk_reach1(expr * Z,
 }
 app * pred_encoder::mk_reachN(std::vector<func_decl*> & prev_reach, std::vector<expr*> & xlocs) {
     sort * const domain[] = {enc.m_loc_sort, enc.m_loc_sort};
-    std::string reachName = "r";
-    reachName += std::to_string((prev_reach.size()+1));
-    func_decl * reach = m.mk_fresh_func_decl(reachName.c_str(), 2, domain, m.mk_bool_sort());
+    func_decl * reach = m.mk_fresh_func_decl(slstar_encoder::reach_prefix.c_str(), 2, domain, m.mk_bool_sort());
     func_decl * preach = prev_reach[prev_reach.size()-1];
     func_decl * reach1 = prev_reach[0];
 
