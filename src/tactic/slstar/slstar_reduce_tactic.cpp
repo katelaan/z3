@@ -304,13 +304,13 @@ class slstar_tactic : public tactic {
                 //    new_pr     = m.mk_modus_ponens(pr, new_pr);
                 //}
                 g->update(idx, new_curr, nullptr, g->dep(idx));
-                encoder.clear_enc_dict();
             }
+            encoder.clear_enc_dict();
             if(bd.contains_calls) {
                 g->assert_expr(encoder.mk_global_constraints());
             }
 
-            if (g->models_enabled())
+            if (g->models_enabled() && !g->inconsistent())
                 mc = alloc(slstar_model_converter, m, encoder);
 
             g->inc_depth();

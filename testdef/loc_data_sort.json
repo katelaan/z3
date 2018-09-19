@@ -68,7 +68,7 @@
             "name": "wrong_sort",
             "file": "loc_data_sorts/wrong_sort.smt2",
             "traces": [],
-            "stdout":"unsat\n"
+            "stdout":"unknown\n"
         }
     ]
 }

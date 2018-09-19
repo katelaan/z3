@@ -122,6 +122,7 @@ void slstar_encoder::encode_top(expr * current, expr_ref & new_ex) {
 
 void slstar_encoder::encode(expr * ex) {
     SASSERT(is_app(ex));
+
     /* ignore constants */
     if(encoding.find(ex) != encoding.end() ) {
         return;
@@ -563,12 +564,9 @@ void slstar_encoder::add_ptor(expr * ex, expr * const * args, unsigned num) {
 
 void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==2);
-    sl_enc * enc = new sl_enc(m,*this);
-    enc->mk_fresh_Y();
-    enc->is_spatial = true;
 
     expr * x = mk_encoded_loc(args[0]);
-    expr * y = args[1];
+    app * y = to_app(args[1]);
 
     app * tx = to_app(args[0]);
     func_decl * x_decl = tx->get_decl();
@@ -577,6 +575,15 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
     SASSERT(dat_sort_param.is_ast());
     SASSERT(is_sort(dat_sort_param.get_ast()));
     sort * data_sort = to_sort(dat_sort_param.get_ast());
+
+    
+    if(!y->get_decl()->get_range()->is_sort_of(data_sort->get_family_id(), data_sort->get_decl_kind())) {
+        m.raise_exception("ptod location points to wrong datasort!");
+    }
+
+    sl_enc * enc = new sl_enc(m,*this);
+    enc->mk_fresh_Y();
+    enc->is_spatial = true;
 
     func_decl * f_dat = get_f_dat(data_sort);
 

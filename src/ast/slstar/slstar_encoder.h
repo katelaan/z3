@@ -77,7 +77,6 @@ public:
     static const std::string xl_prefix;
     static const std::string xt_prefix;
 
-
     slstar_util              util;
     array_util               m_arrayutil;
 
