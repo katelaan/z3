@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys, os
 import subprocess as sp
+import psutil
 import re, difflib
 import json
 import z3
@@ -110,8 +111,9 @@ class Test(object):
         sys.stdout.write(BLUE+"Test '" + self.name + "' ("+self.smtfile+"):\n"+ ENDC)
         #print([Z3_BIN,self.smtfile] + list(traces))
         #stdout_is = ""
-        p = sp.Popen([Z3_BIN, self.smtfile] + list(traces), stdout=sp.PIPE)
+        p = psutil.Popen([Z3_BIN, self.smtfile] + list(traces), stdout=sp.PIPE)
         stdout_is = p.stdout.read().decode("utf-8")
+        self.print_process_info(p)
         
         self.test_stdout(stdout_is)
 
@@ -123,6 +125,13 @@ class Test(object):
         for trace in self.traces:
             trace.test(read_next_tag(f))
         f.close()
+
+    def print_process_info(self, p):
+        time = p.cpu_times().user
+        ret = p.wait()
+        sys.stdout.write("  process return code: {}\n".format(ret))
+        sys.stdout.write("  total runtime (user): {}\n".format(time))
+
 
     def test_stdout(self, stdout_is):
         if(self.model):

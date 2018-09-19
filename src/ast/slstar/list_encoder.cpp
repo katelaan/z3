@@ -11,13 +11,19 @@ app * list_encoder::mk_defineY(sl_enc * e, expr * Z) {
     std::vector<expr*> andargs;
     if(Z!=nullptr){
         andargs.push_back(m.mk_eq(e->Yd, Z));
-        andargs.push_back(m.mk_eq(e->Yn, Z));
+        if(enc.needs_list_footprint){
+            andargs.push_back(m.mk_eq(e->Yn, Z));
+        }
     } else {
         andargs.push_back(enc.mk_is_empty(e->Yd));
-        andargs.push_back(enc.mk_is_empty(e->Yn));
+        if(enc.needs_list_footprint){
+            andargs.push_back(enc.mk_is_empty(e->Yn));
+        }
     }
-    andargs.push_back(enc.mk_is_empty(e->Yl));
-    andargs.push_back(enc.mk_is_empty(e->Yr));
+    if(enc.needs_tree_footprint){
+        andargs.push_back(enc.mk_is_empty(e->Yl));
+        andargs.push_back(enc.mk_is_empty(e->Yr));
+    }
     return m.mk_and(andargs.size(), &andargs[0]);
 }
 

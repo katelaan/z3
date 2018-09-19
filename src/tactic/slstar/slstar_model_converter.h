@@ -24,6 +24,8 @@ class slstar_model_converter : public model_converter {
     std::string                           f_right_name;
     std::unordered_set<std::string>       f_dat_names;
 
+    bool needs_tree_footprint;
+    bool needs_list_footprint;
 public:
     slstar_model_converter(ast_manager & m, slstar_encoder & enc);
 

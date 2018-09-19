@@ -23,10 +23,23 @@ slstar_model_converter::slstar_model_converter(ast_manager & m, slstar_encoder &
     list_locs(enc.list_locs),
     tree_locs(enc.tree_locs)
 {
+
+    needs_tree_footprint = enc.needs_tree_footprint;
+    needs_list_footprint = enc.needs_list_footprint;
+
     Xd_name = enc.Xd->get_decl()->get_name().bare_str();
-    Xn_name = enc.Xn->get_decl()->get_name().bare_str();;
-    Xl_name = enc.Xl->get_decl()->get_name().bare_str();;
-    Xr_name = enc.Xr->get_decl()->get_name().bare_str();;
+    if(needs_list_footprint){
+        Xn_name = enc.Xn->get_decl()->get_name().bare_str();
+    } else {
+        Xn_name = "";
+    }
+    if(needs_tree_footprint){
+        Xl_name = enc.Xl->get_decl()->get_name().bare_str();
+        Xr_name = enc.Xr->get_decl()->get_name().bare_str();
+    } else {
+        Xl_name = "";
+        Xr_name = "";
+    }
 
     f_next_name = enc.f_next->get_name().bare_str();
     f_left_name = enc.f_left->get_name().bare_str();
@@ -48,6 +61,7 @@ slstar_model_converter::slstar_model_converter(ast_manager & m, slstar_encoder &
         std::string name = decl->get_name().bare_str();
         loc_constants_names.emplace(name);
     }
+
 }
 
 slstar_model_converter::~slstar_model_converter(){

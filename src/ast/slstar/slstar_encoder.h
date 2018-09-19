@@ -69,6 +69,9 @@ protected:
     app                    * Xr = nullptr;
     app                    * Xd = nullptr;
     app                    * enc_null = nullptr;
+
+    bool needs_tree_footprint;
+    bool needs_list_footprint;
 public:
     static const std::string Z_prefix;
     static const std::string Y_prefix;
@@ -140,8 +143,11 @@ public:
     expr * Yd;
     bool is_spatial;
     bool is_rewritten;
+    bool needs_tree_footprint;
+    bool needs_list_footprint;
 
-    sl_enc(ast_manager & m, slstar_encoder & enc);
+
+    sl_enc(ast_manager & m, slstar_encoder & enc, sl_bounds & bounds);
     ~sl_enc();
 private:
 

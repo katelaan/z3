@@ -61,22 +61,32 @@ app * slstar_encoder::mk_global_constraints() {
     if(!bounds.contains_calls) {
         return m.mk_true();
     }
-    expr * unionargs[] = {Xn,Xl,Xr,Xd};
+    vector<expr*> unionargs;
+    unionargs.push_back(Xd);
+    if(needs_list_footprint){
+        unionargs.push_back(Xn);
+    }
+    if(needs_tree_footprint){
+        unionargs.push_back(Xr);
+        unionargs.push_back(Xl);
+    }
     expr * X = m.mk_fresh_const("X", m_array_sort);
 
-    expr * unionargsLR[] = {Xl,Xr}; 
     std::vector<expr*> andargs;
 
     std::vector<expr*> locs;
     locs.insert(locs.end(), list_locs.begin(), list_locs.end());
     locs.insert(locs.end(), tree_locs.begin(), tree_locs.end());
     
-    andargs.push_back( m.mk_eq(X,mk_union(unionargs,4)) );
+    andargs.push_back( m.mk_eq(X, mk_union(&unionargs[0],unionargs.size())) );
     andargs.push_back( mk_subset_eq(X, mk_set_from_elements(&locs[0], locs.size())) );
     if(bounds.contains_calls) {
         andargs.push_back( m.mk_not(mk_is_element(enc_null, X)) );
-        expr * Xlr = mk_union(unionargsLR,2); //unionargs+1; TODOsl test
-        andargs.push_back( mk_is_empty( mk_intersect(Xn,Xlr)) );
+        if(needs_list_footprint && needs_tree_footprint){
+            expr * unionargsLR[] = {Xl,Xr}; 
+            expr * Xlr = mk_union(unionargsLR,2);
+            andargs.push_back( mk_is_empty( mk_intersect(Xn,Xlr)) );
+        }
     }
     return m.mk_and(andargs.size(), &andargs[0]);
 }
@@ -84,6 +94,9 @@ app * slstar_encoder::mk_global_constraints() {
 void slstar_encoder::prepare(sl_bounds bd) {
     SASSERT(list_locs.size()==0 && tree_locs.size()==0);
     bounds = bd;
+
+    needs_tree_footprint = bounds.n_tree > 0;
+    needs_list_footprint = bounds.n_list > 0;
     for(int i=0; i<bd.n_list; i++) {
         app * fresh = m.mk_fresh_const(xt_prefix.c_str(), m_loc_sort);
         m.inc_ref(fresh);
@@ -95,9 +108,13 @@ void slstar_encoder::prepare(sl_bounds bd) {
         tree_locs.push_back(fresh);
     }
 
-    Xn = mk_fresh_array( (X_prefix + "n").c_str());
-    Xl = mk_fresh_array( (X_prefix + "l").c_str());
-    Xr = mk_fresh_array( (X_prefix + "r").c_str());
+    if(needs_list_footprint){
+        Xn = mk_fresh_array( (X_prefix + "n").c_str());
+    }
+    if(needs_tree_footprint){
+        Xl = mk_fresh_array( (X_prefix + "l").c_str());
+        Xr = mk_fresh_array( (X_prefix + "r").c_str());
+    }
     Xd = mk_fresh_array( (X_prefix + "d").c_str());
 }
 
@@ -110,9 +127,13 @@ void slstar_encoder::encode_top(expr * current, expr_ref & new_ex) {
         std::vector<expr*> andargs;
         andargs.push_back(enc->A);
         andargs.push_back(enc->B);
-        andargs.push_back(m.mk_eq(enc->Yn, Xn));
-        andargs.push_back(m.mk_eq(enc->Yl, Xl));
-        andargs.push_back(m.mk_eq(enc->Yr, Xr));
+        if(needs_list_footprint){
+            andargs.push_back(m.mk_eq(enc->Yn, Xn));
+        }
+        if(needs_tree_footprint){
+            andargs.push_back(m.mk_eq(enc->Yl, Xl));
+            andargs.push_back(m.mk_eq(enc->Yr, Xr));
+        }
         andargs.push_back(m.mk_eq(enc->Yd, Xd));
         new_ex = m.mk_and(andargs.size(), &andargs[0]);
     } else {
@@ -310,7 +331,7 @@ app * slstar_encoder::mk_encoded_loc(expr * x) {
 
 void slstar_encoder::add_list(expr * ex, expr * const * args, unsigned num) {
     SASSERT(is_app(ex));
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -388,7 +409,7 @@ void slstar_encoder::add_list(expr * ex, expr * const * args, unsigned num) {
 
 void slstar_encoder::add_tree(expr * ex, expr * const * args, unsigned num) {
     SASSERT(is_app(ex));
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -466,12 +487,22 @@ void slstar_encoder::add_tree(expr * ex, expr * const * args, unsigned num) {
 }
 
 void slstar_encoder::add_floc_fdat(expr * ex, expr * const * args, unsigned num) {
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->is_spatial = false;
     
     enc->mk_fresh_Y();
-    expr * const andargs[] = {mk_is_empty(enc->Yn), mk_is_empty(enc->Yl), mk_is_empty(enc->Yn), mk_is_empty(enc->Yd) };
-    enc->B = m.mk_and(4, andargs);
+
+    std::vector<expr*> andargs;
+    if(needs_list_footprint) {
+        andargs.push_back(mk_is_empty(enc->Yn));
+    }
+    if(needs_tree_footprint){
+        andargs.push_back(mk_is_empty(enc->Yl));
+        andargs.push_back(mk_is_empty(enc->Yr));
+    }
+    andargs.push_back(mk_is_empty(enc->Yd));
+
+    enc->B = m.mk_and(andargs.size(), &andargs[0]);
     bool needs_rewrite = is_any_rewritten(args,num);
     if(needs_rewrite) {
         app * t = to_app(ex);
@@ -492,7 +523,7 @@ void slstar_encoder::add_floc_fdat(expr * ex, expr * const * args, unsigned num)
 
 
 void slstar_encoder::add_const(expr * ex) {
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->is_spatial = false;
 
     enc->inc_ref();
@@ -502,7 +533,7 @@ void slstar_encoder::add_const(expr * ex) {
 
 void slstar_encoder::add_pton(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==2);
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -512,9 +543,14 @@ void slstar_encoder::add_pton(expr * ex, expr * const * args, unsigned num) {
     expr* f_next_x = m.mk_app(f_next,x);
     enc->A = m.mk_and(m.mk_eq(f_next_x,y), m.mk_not(m.mk_eq(x, enc_null )));
     
-    expr * tmp = m.mk_eq(enc->Yn, mk_set_from_elements(&x,1));
-    expr * const andargs[] = {tmp, mk_is_empty(enc->Yl), mk_is_empty(enc->Yr), mk_is_empty(enc->Yd) };
-    enc->B = m.mk_and(4, andargs);
+    std::vector<expr*> andargs;
+    andargs.push_back(m.mk_eq(enc->Yn, mk_set_from_elements(&x,1)));
+    if(needs_tree_footprint){
+        andargs.push_back(mk_is_empty(enc->Yl));
+        andargs.push_back(mk_is_empty(enc->Yr));
+    }
+    andargs.push_back(mk_is_empty(enc->Yd));
+    enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
     enc->inc_ref();
     encoding[ex] = enc;
@@ -522,7 +558,7 @@ void slstar_encoder::add_pton(expr * ex, expr * const * args, unsigned num) {
 
 void slstar_encoder::add_ptol(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==2);
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -532,10 +568,15 @@ void slstar_encoder::add_ptol(expr * ex, expr * const * args, unsigned num) {
     expr* f_left_x = m.mk_app(f_left,x);
     enc->A = m.mk_and(m.mk_eq(f_left_x,y), m.mk_not(m.mk_eq(x, enc_null )));
     
-    
-    expr * tmp = m.mk_eq(enc->Yl, mk_set_from_elements(&x,1));
-    expr * const andargs[] = {tmp, mk_is_empty(enc->Yn), mk_is_empty(enc->Yr), mk_is_empty(enc->Yd) };
-    enc->B = m.mk_and(4, andargs);
+    std::vector<expr*> andargs;
+    andargs.push_back(m.mk_eq(enc->Yl, mk_set_from_elements(&x,1)));
+    andargs.push_back(mk_is_empty(enc->Yr));
+    if(needs_list_footprint) {
+        andargs.push_back(mk_is_empty(enc->Yn));
+    }
+    andargs.push_back(mk_is_empty(enc->Yd));
+
+    enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
     enc->inc_ref();
     encoding[ex] = enc;
@@ -543,7 +584,7 @@ void slstar_encoder::add_ptol(expr * ex, expr * const * args, unsigned num) {
 
 void slstar_encoder::add_ptor(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==2);
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -553,10 +594,15 @@ void slstar_encoder::add_ptor(expr * ex, expr * const * args, unsigned num) {
     expr* f_right_x = m.mk_app(f_right,x);
     enc->A = m.mk_and(m.mk_eq(f_right_x,y), m.mk_not(m.mk_eq(x, enc_null )));
     
-    
-    expr * tmp = m.mk_eq(enc->Yr, mk_set_from_elements(&x,1));
-    expr * const andargs[] = {tmp, mk_is_empty(enc->Yl), mk_is_empty(enc->Yn), mk_is_empty(enc->Yd) };
-    enc->B = m.mk_and(4, andargs);
+    std::vector<expr*> andargs;
+    andargs.push_back(m.mk_eq(enc->Yr, mk_set_from_elements(&x,1)));
+    andargs.push_back(mk_is_empty(enc->Yl));
+    if(needs_list_footprint) {
+        andargs.push_back(mk_is_empty(enc->Yn));
+    }
+    andargs.push_back(mk_is_empty(enc->Yd));
+
+    enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
     enc->inc_ref();
     encoding[ex] = enc;
@@ -581,7 +627,7 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
         m.raise_exception("ptod location points to wrong datasort!");
     }
 
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -589,10 +635,18 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
 
     expr* f_dat_x = m.mk_app(f_dat,x);
     enc->A = m.mk_and(m.mk_eq(f_dat_x,y), m.mk_not(m.mk_eq(x, enc_null )));
-    
-    expr * tmp = m.mk_eq(enc->Yd, mk_set_from_elements(&x,1));
-    expr * const andargs[] = {tmp, mk_is_empty(enc->Yl), mk_is_empty(enc->Yr), mk_is_empty(enc->Yn) };
-    enc->B = m.mk_and(4, andargs);
+
+    std::vector<expr*> andargs;
+    andargs.push_back(m.mk_eq(enc->Yd, mk_set_from_elements(&x,1)));
+    if(needs_list_footprint) {
+        andargs.push_back(mk_is_empty(enc->Yn));
+    }
+    if(needs_tree_footprint) {
+        andargs.push_back(mk_is_empty(enc->Yl));
+        andargs.push_back(mk_is_empty(enc->Yr));
+    }
+
+    enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
     enc->inc_ref();
     encoding[ex] = enc;
@@ -600,7 +654,7 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
 
 void slstar_encoder::add_ptolr(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==3);
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -612,17 +666,22 @@ void slstar_encoder::add_ptolr(expr * ex, expr * const * args, unsigned num) {
     expr* f_left_x = m.mk_app(f_left,x);
     enc->A = m.mk_and(m.mk_eq(f_left_x,y1), m.mk_eq(f_right_x,y2), m.mk_not(m.mk_eq(x, enc_null ) ));
     
-    expr * tmp1 = m.mk_eq(enc->Yl, mk_set_from_elements(&x,1));
-    expr * tmp2 = m.mk_eq(enc->Yr, mk_set_from_elements(&x,1));
-    expr * const andargs[] = {tmp1, tmp2, mk_is_empty(enc->Yn), mk_is_empty(enc->Yd) };
-    enc->B = m.mk_and(4, andargs);
+    std::vector<expr*> andargs;
+    andargs.push_back(m.mk_eq(enc->Yl, mk_set_from_elements(&x,1)));
+    andargs.push_back(m.mk_eq(enc->Yr, mk_set_from_elements(&x,1)));
+    if(needs_list_footprint) {
+        andargs.push_back(mk_is_empty(enc->Yn));
+    }
+    andargs.push_back(mk_is_empty(enc->Yd));
+
+    enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
     enc->inc_ref();
     encoding[ex] = enc;
 }
 
 void slstar_encoder::add_sep(expr * ex, expr * const * args, unsigned num) {
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -644,24 +703,36 @@ void slstar_encoder::add_sep(expr * ex, expr * const * args, unsigned num) {
         }
         andargsA.push_back(encoding[args[i]]->A);
         andargsB.push_back(encoding[args[i]]->B);
-        Yn.push_back(encoding[args[i]]->Yn);
-        Yl.push_back(encoding[args[i]]->Yl);
-        Yr.push_back(encoding[args[i]]->Yr);
+        if(needs_list_footprint){
+            Yn.push_back(encoding[args[i]]->Yn);
+        }
+        if(needs_tree_footprint){
+            Yl.push_back(encoding[args[i]]->Yl);
+            Yr.push_back(encoding[args[i]]->Yr);
+        }
         Yd.push_back(encoding[args[i]]->Yd);
     }
     // add A: pairwise check of separation of Ys
     for(unsigned i=0; i<num; i++) {
         for(unsigned j=i+1; j<num; j++){
-            andargsA.push_back(mk_is_empty(mk_intersect(encoding[args[i]]->Yn, encoding[args[j]]->Yn)));
-            andargsA.push_back(mk_is_empty(mk_intersect(encoding[args[i]]->Yl, encoding[args[j]]->Yl)));
-            andargsA.push_back(mk_is_empty(mk_intersect(encoding[args[i]]->Yr, encoding[args[j]]->Yr)));
+            if(needs_list_footprint){
+                andargsA.push_back(mk_is_empty(mk_intersect(encoding[args[i]]->Yn, encoding[args[j]]->Yn)));
+            }
+            if(needs_tree_footprint){
+                andargsA.push_back(mk_is_empty(mk_intersect(encoding[args[i]]->Yl, encoding[args[j]]->Yl)));
+                andargsA.push_back(mk_is_empty(mk_intersect(encoding[args[i]]->Yr, encoding[args[j]]->Yr)));
+            }
             andargsA.push_back(mk_is_empty(mk_intersect(encoding[args[i]]->Yd, encoding[args[j]]->Yd)));
         }
     }
     // add B: current Y is equal to union of all Ys
-    andargsB.push_back( m.mk_eq(mk_union(&Yn[0], num), enc->Yn ));
-    andargsB.push_back( m.mk_eq(mk_union(&Yl[0], num), enc->Yl ));
-    andargsB.push_back( m.mk_eq(mk_union(&Yr[0], num), enc->Yr ));
+    if(needs_list_footprint) {
+        andargsB.push_back( m.mk_eq(mk_union(&Yn[0], num), enc->Yn ));
+    }
+    if(needs_tree_footprint) {
+        andargsB.push_back( m.mk_eq(mk_union(&Yl[0], num), enc->Yl ));
+        andargsB.push_back( m.mk_eq(mk_union(&Yr[0], num), enc->Yr ));
+    }
     andargsB.push_back( m.mk_eq(mk_union(&Yd[0], num), enc->Yd ));
 
     enc->A = m.mk_and(andargsA.size(), &andargsA[0]);
@@ -674,7 +745,7 @@ void slstar_encoder::add_not(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==1);
     SASSERT(encoding.find(args[0]) != encoding.end());
 
-    sl_enc * enc = new sl_enc(m,*this);
+    sl_enc * enc = new sl_enc(m,*this,bounds);
     enc->is_spatial = encoding[args[0]]->is_spatial;
     enc->A = m.mk_not( encoding[args[0]]->A );
     enc->B = encoding[args[0]]->B;
@@ -716,7 +787,7 @@ void slstar_encoder::add_distinct(expr * ex, expr * const * args, unsigned num) 
 void slstar_encoder::add_and(expr * ex, expr * const * args, unsigned num) {
     bool is_spatial = is_any_spatial(args,num);
     if(is_spatial) {
-        sl_enc * enc = new sl_enc(m,*this);
+        sl_enc * enc = new sl_enc(m,*this,bounds);
         enc->is_spatial = is_spatial;
         enc->copy_Y(encoding[args[0]]);
 
@@ -738,7 +809,7 @@ void slstar_encoder::add_and(expr * ex, expr * const * args, unsigned num) {
 void slstar_encoder::add_or(expr * ex, expr * const * args, unsigned num) {
     bool is_spatial = is_any_spatial(args,num);
     if(is_spatial) {
-        sl_enc * enc = new sl_enc(m,*this);
+        sl_enc * enc = new sl_enc(m,*this,bounds);
         enc->is_spatial = is_spatial;
         enc->copy_Y(encoding[args[0]]);
 
@@ -784,9 +855,13 @@ void sl_enc::mk_fresh_Y() {
     if(Yl) m.dec_ref(Yl);
     if(Yr) m.dec_ref(Yr);
     if(Yd) m.dec_ref(Yd);
-    Yn = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "n").c_str() );
-    Yl = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "l").c_str() );
-    Yr = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "r").c_str() );
+    if(needs_list_footprint) {
+        Yn = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "n").c_str() );
+    }
+    if(needs_tree_footprint) {
+        Yl = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "l").c_str() );
+        Yr = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "r").c_str() );
+    }
     Yd = enc.mk_fresh_array( (slstar_encoder::Y_prefix + "d").c_str() );
 }
 
@@ -797,7 +872,7 @@ void sl_enc::copy_Y(sl_enc * other) {
     Yd = other->Yd;
 }
 
-sl_enc::sl_enc(ast_manager & _m, slstar_encoder & _enc) : m(_m), enc(_enc){
+sl_enc::sl_enc(ast_manager & _m, slstar_encoder & _enc, sl_bounds & bounds) : m(_m), enc(_enc){
     Yn = nullptr;
     Yl = nullptr;
     Yr = nullptr;
@@ -806,6 +881,8 @@ sl_enc::sl_enc(ast_manager & _m, slstar_encoder & _enc) : m(_m), enc(_enc){
     B = nullptr;
     is_spatial = false;
     is_rewritten = false;
+    needs_tree_footprint = bounds.n_tree > 0;
+    needs_list_footprint = bounds.n_list > 0;
 }
 
 sl_enc::~sl_enc() {
