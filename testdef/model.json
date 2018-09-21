@@ -35,6 +35,14 @@
             "file": "model/ptod3.smt2",
             "traces": [],
             "model": ["(not (select Xd x))", "(= x null)"]
+        },
+
+
+        {
+            "name": "list-list-eq",
+            "file": "model/list-list-eq.smt2",
+            "traces": [],
+            "model": ["(= a f)", "(= b e)", "(= c d)"]
         }
     ]
 }

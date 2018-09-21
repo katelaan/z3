@@ -1,6 +1,7 @@
 z3_add_component(slstar_tactics
   SOURCES
     slstar_reduce_tactic.cpp
+    slstar_spatial_eq_propagation_tactic.cpp
     slstar_model_converter.cpp
   COMPONENT_DEPENDENCIES
     slstar
@@ -12,4 +13,5 @@ z3_add_component(slstar_tactics
     smt_tactic
   TACTIC_HEADERS
     slstar_reduce_tactic.h
+    slstar_spatial_eq_propagation_tactic.h
 )

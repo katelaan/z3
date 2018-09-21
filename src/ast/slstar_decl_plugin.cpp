@@ -319,6 +319,8 @@ void slstar_decl_plugin::finalize() {
 }
 
 slstar_decl_plugin::~slstar_decl_plugin() {
+    if(s_loc_sort!= nullptr)
+    m_manager->dec_ref(s_loc_sort);
 }
 
 slstar_util::slstar_util(ast_manager & m) :

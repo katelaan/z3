@@ -1,20 +1,18 @@
 #include "tactic/tactical.h"
-#include "tactic/core/simplify_tactic.h"
-#include "tactic/bv/bit_blaster_tactic.h"
 #include "sat/tactic/sat_tactic.h"
 #include "smt/tactic/smt_tactic.h"
+#include "tactic/portfolio/default_tactic.h"
+
+#include "tactic/core/simplify_tactic.h"
 #include "tactic/core/propagate_values_tactic.h"
-#include "ackermannization/ackermannize_bv_tactic.h"
-#include "tactic/arith/probe_arith.h"
-#include "tactic/smtlogics/qfnra_tactic.h"
 
 #include "ast/slstar_decl_plugin.h"
-//#include "ast/slstar/slstar_rewriter.h"
 #include "ast/slstar/slstar_encoder.h"
 #include "tactic/slstar/slstar_reduce_tactic.h"
 #include "tactic/slstar/slstar_model_converter.h"
+#include "tactic/slstar/slstar_spatial_eq_propagation_tactic.h"
 
-#include <set>
+#include <unordered_set>
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -27,14 +25,15 @@ class slstar_tactic : public tactic {
         bool              m_proofs_enabled;
         bool              m_produce_models;
         bool              m_produce_unsat_cores;
+        equality_bin_map_ref equality_bins;
 
-        imp(ast_manager & _m, params_ref const & p):
+        imp(ast_manager & _m, equality_bin_map_ref eq_bins, params_ref const & p):
             m(_m),
             util(m),
             m_proofs_enabled(false),
             m_produce_models(false),
-            m_produce_unsat_cores(false) {
-
+            m_produce_unsat_cores(false),
+            equality_bins(eq_bins) { 
             }
 
         void updt_params(params_ref const & p) {
@@ -106,9 +105,9 @@ class slstar_tactic : public tactic {
             util.get_constants(&consts, t);
             count_non_null_const(ret, consts);
 
-            std::list<std::pair<expr*,bool> > atoms;
+            std::list<std::pair<expr*,bool> > atoms; // pair of atom, and bool if the parent is negated
             util.get_spatial_atoms_with_polarity(&atoms, t);
-            for(auto it = atoms.begin(); it != atoms.end(); it++){
+            for(auto it = atoms.begin(); it != atoms.end(); ++it){
                 if(util.is_call( (*it).first) ) {
                     ret.contains_calls = true;
                     if(util.is_list( (*it).first )) { 
@@ -169,10 +168,10 @@ class slstar_tactic : public tactic {
         }
 
         void count_non_null_const(sl_bounds & ret, std::list<expr*> & consts) {
-            std::set<std::string> tconst;
-            std::set<std::string> lconst;
+            std::unordered_set<std::string> tconst;
+            std::unordered_set<std::string> lconst;
 
-            for(auto it = consts.begin(); it != consts.end(); it++){
+            for(auto it = consts.begin(); it != consts.end(); ++it){
                 SASSERT( is_app(*it));
                 app * t = to_app(*it);
                 func_decl * d = to_app(t)->get_decl();
@@ -199,7 +198,7 @@ class slstar_tactic : public tactic {
             std::list<expr*> atoms;
             util.get_spatial_atoms(&atoms,ex);
 
-            for(auto it = atoms.begin(); it != atoms.end(); it++){
+            for(auto it = atoms.begin(); it != atoms.end(); ++it){
                 SASSERT(!util.is_call(*it));
                 if(util.is_pto(*it)) {
                     app * t = to_app(*it);
@@ -249,7 +248,7 @@ class slstar_tactic : public tactic {
             // if one of the spatial atom of the spatial form is a call, ignore (i.e. reuturn true and nullptr) ...
             std::list<expr*> atoms;
             util.get_spatial_atoms( &atoms, in );
-            for(auto it = atoms.begin(); it != atoms.end(); it++){
+            for(auto it = atoms.begin(); it != atoms.end(); ++it){
                 if(util.is_call(*it)){
                     out = nullptr;
                     return true;
@@ -264,7 +263,8 @@ class slstar_tactic : public tactic {
                         goal_ref_buffer & result,
                         model_converter_ref & mc,
                         proof_converter_ref & pc,
-                        expr_dependency_ref & core) {
+                        expr_dependency_ref & core,
+                        sort* loc_sort) {
             SASSERT(g->is_well_sorted());
             m_proofs_enabled      = g->proofs_enabled();
             m_produce_models      = g->models_enabled();
@@ -288,9 +288,8 @@ class slstar_tactic : public tactic {
 
             expr_ref   new_curr(m);
 
-            sort * loc_sort = slstar_decl_plugin::get_loc_sort(&m);
             slstar_encoder    encoder(m, loc_sort );
-            m.dec_ref(loc_sort);
+            
             encoder.prepare(bd);
             //proof_ref  new_pr(m);
             unsigned size = g->size();
@@ -305,6 +304,25 @@ class slstar_tactic : public tactic {
                 //}
                 g->update(idx, new_curr, nullptr, g->dep(idx));
             }
+            
+            // assert the equalness of all substituted locations
+            std::unordered_set<equality_bin> seen;
+            for(auto it=equality_bins->begin(); it!=equality_bins->end(); ++it) {
+                if( seen.find(it->second)!=seen.end()){
+                    continue;
+                }
+                seen.emplace(it->second);
+                std::vector<expr*> eq_args;
+                //eq_args.reserve(it->second->size());
+                for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
+                    eq_args.push_back(encoder.mk_encoded_loc(*jt));
+                }
+                g->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
+                for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
+                    m.dec_ref(*jt);
+                }
+            }
+
             encoder.clear_enc_dict();
             if(bd.contains_calls) {
                 g->assert_expr(encoder.mk_global_constraints());
@@ -329,14 +347,20 @@ class slstar_tactic : public tactic {
     imp *      m_imp;
     params_ref m_params;
 
+    ast_manager           & m;
+    equality_bin_map_ref    equality_bins;
+
 public:
-    slstar_tactic(ast_manager & m, params_ref const & p):
-        m_params(p) {
-        m_imp = alloc(imp, m, p);
+    slstar_tactic(ast_manager & m, equality_bin_map_ref eq_bins, params_ref const & p):
+        m_params(p),
+        m(m),
+        equality_bins(eq_bins)
+    {
+        m_imp = alloc(imp, m, eq_bins, p );
     }
 
     tactic * translate(ast_manager & m) override {
-        return alloc(slstar_tactic, m, m_params);
+        return alloc(slstar_tactic, m, equality_bin_map_ref( new equality_bin_map() ), m_params);
     }
 
     ~slstar_tactic() override {
@@ -357,7 +381,7 @@ public:
                     proof_converter_ref & pc,
                     expr_dependency_ref & core) override {
         try {
-            (*m_imp)(in, result, mc, pc, core);
+            (*m_imp)(in, result, mc, pc, core, slstar_decl_plugin::get_loc_sort(&m));
         }
         catch (rewriter_exception & ex) {
             throw tactic_exception(ex.msg());
@@ -365,7 +389,7 @@ public:
     }
 
     void cleanup() override {
-        imp * d = alloc(imp, m_imp->m, m_params);
+        imp * d = alloc(imp, m_imp->m, equality_bins, m_params);
         std::swap(d, m_imp);
         dealloc(d);
     }
@@ -418,8 +442,8 @@ probe * mk_is_slstar_probe() {
     return alloc(is_slstar_probe);
 }
 
-tactic * mk_slstar_tactic(ast_manager & m, params_ref const & p) {
-    return clean(alloc(slstar_tactic, m, p));
+tactic * mk_slstar_tactic(ast_manager & m, equality_bin_map_ref eq_bins, params_ref const & p) {
+    return clean(alloc(slstar_tactic, m, eq_bins, p));
 }
 
 tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
@@ -427,23 +451,13 @@ tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
     simp_p.set_bool("arith_lhs", true);
     simp_p.set_bool("elim_and", true);
 
-    tactic * preamble = and_then(/*mk_simplify_tactic(m, simp_p),
-                                 mk_propagate_values_tactic(m, p),*/
-                                 mk_slstar_tactic(m, p),
-                                 mk_simplify_tactic(m, simp_p),
-                                 mk_propagate_values_tactic(m, p),
-                                 using_params(mk_simplify_tactic(m, p), simp_p),
-                                 if_no_proofs(if_no_unsat_cores(mk_ackermannize_bv_tactic(m, p))));
+    std::shared_ptr<equality_bin_map> equalities( new equality_bin_map() );
 
-    tactic * st = and_then(preamble,
-                           mk_bit_blaster_tactic(m, p),
-                           using_params(mk_simplify_tactic(m, p), simp_p),
-                           cond(mk_is_propositional_probe(),
-                                cond(mk_produce_proofs_probe(),
-                                     mk_smt_tactic(p), // `sat' does not support proofs.
-                                     mk_sat_tactic(m, p)),
-                                mk_smt_tactic(p))
-                    );
+    tactic * st = and_then( mk_simplify_tactic(m, p),
+                            mk_slstar_spatial_eq_propagation_tactic(m, equalities),
+                            mk_slstar_tactic(m, equalities, p),
+                            mk_propagate_values_tactic(m, p),
+                            mk_default_tactic(m, p));
 
     st->updt_params(p);
     return st;

@@ -161,8 +161,9 @@ void slstar_model_converter::convert(model * mc, model * mdl) {
 
 void slstar_model_converter::emplace_array_helper(std::unordered_set<symbol> &array_helpers, model * mc, func_decl * decl) {
     expr * e = mc->get_const_interp(decl);
-    SASSERT(m_arrayutil.is_as_array(e));
-    array_helpers.emplace( m_arrayutil.get_as_array_func_decl(e)->get_name() );
+    if(m_arrayutil.is_as_array(e)){
+        array_helpers.emplace( m_arrayutil.get_as_array_func_decl(e)->get_name() );
+    }
 }
 
 void slstar_model_converter::check_single_loc(std::vector<expr*> & elements, expr * loc, func_decl * Xdecl, model * mc) {
