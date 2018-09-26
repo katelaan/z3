@@ -19,7 +19,7 @@ enum sl_enc_level {
     SL_LEVEL_FULL = 100,
     SL_LEVEL_FOOTPRINTS = 90,
     SL_LEVEL_UF = 80,
-    SL_LEVEL_INVALID = 100
+    SL_LEVEL_INVALID = 0
 };
 
 #include "ast/slstar/pred_encoder.h"

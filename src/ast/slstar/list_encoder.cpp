@@ -34,6 +34,7 @@ void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
     sl_enc * enc = new sl_enc(m,this->enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
+    enc->level = SL_LEVEL_FULL;
 
     expr * xenc;
 
@@ -103,7 +104,6 @@ void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
 
     enc->A = m.mk_and( andargs.size(), &andargs[0]);
     enc->inc_ref();
-    enc->level = SL_LEVEL_FULL;
     this->enc.encoding[ex] = enc;
 }
 

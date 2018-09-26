@@ -263,7 +263,7 @@ class slstar_tactic : public tactic {
 
         void perform_encoding(slstar_encoder & encoder, goal_ref const & g, goal_ref_buffer & result, bool contains_calls) {
             
-            goal* goal_tmp = alloc(goal, *g, false);
+            //goal* goal_tmp = alloc(goal, *g, false);
 
             expr_ref   new_curr(m);
             //proof_ref  new_pr(m);
@@ -274,7 +274,8 @@ class slstar_tactic : public tactic {
                 expr * curr = g->form(idx);
                 encoder.encode_top(curr, new_curr);
 
-                goal_tmp->assert_expr(new_curr);
+                //goal_tmp->assert_expr(new_curr);
+                g->update(idx, new_curr, nullptr, g->dep(idx));
             }
             
             // assert the equalness of all substituted locations
@@ -291,19 +292,23 @@ class slstar_tactic : public tactic {
                 }
                 // e.g. (= x x) -> (= x) invalid
                 if(eq_args.size()>=2) {
-                    goal_tmp->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
+                    //goal_tmp->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
+                    g->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
                 }
 
             }
 
             if(contains_calls) {
-                goal_tmp->assert_expr(encoder.mk_global_constraints());
+                //goal_tmp->assert_expr(encoder.mk_global_constraints());
+                g->assert_expr(encoder.mk_global_constraints());
             }
-            g->reset();
+            //g->reset();
 
-            goal_tmp->inc_depth();
+            //goal_tmp->inc_depth();
+            g->inc_depth();
 
-            result.push_back(goal_tmp);
+            //result.push_back(goal_tmp);
+            result.push_back(g.get());
         }
 
         void operator()(goal_ref const & g,

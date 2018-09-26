@@ -155,6 +155,7 @@ void slstar_encoder::encode(expr * ex) {
     lower than current encoding level */
     auto it = encoding.find(ex);
     if( it != encoding.end() ) {
+        SASSERT(it->second->level != SL_LEVEL_INVALID);
         if(it->second->level >= current_level) {
             return;
         }
@@ -387,6 +388,7 @@ void slstar_encoder::add_const(expr * ex) {
     enc->is_spatial = false;
 
     enc->inc_ref();
+    enc->level = SL_LEVEL_FULL;
     encoding[ex] = enc;
 }
 
@@ -724,7 +726,7 @@ sl_enc_level slstar_encoder::get_lowest_level(expr * const * args, unsigned num)
     sl_enc_level ret = SL_LEVEL_INVALID;
     for(unsigned i=0; i<num; i++) {
         SASSERT(encoding.find(args[i]) != encoding.end());
-        if(encoding[args[i]]->level < ret) {
+        if(encoding[args[i]]->level >= ret) {
             ret = encoding[args[i]]->level;
         }
     }
