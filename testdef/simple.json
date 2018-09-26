@@ -89,6 +89,18 @@
             "file": "simple/tree_seg_null.smt2",
             "traces": [],
             "stdout":"sat\n"
+        },
+        {
+            "name": "ListNotList",
+            "file": "simple/list_not_list.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
+        },
+        {
+            "name": "LeakTest",
+            "file": "simple/leak_test.smt2",
+            "traces": [],
+            "stdout":"sat\n"
         }
     ]
 }

@@ -21,6 +21,7 @@ class tree_encoder : public pred_encoder {
 
 public:
     tree_encoder(slstar_encoder & enc);
+    void add_tree(expr * ex, expr * const * args, unsigned num, sl_enc_level level);
     app * mk_is_successor(expr * x, expr * y);
     app * mk_ordered(expr * Z, 
         std::vector<expr*> & xlocs, 
@@ -30,6 +31,9 @@ public:
     app * mk_all_succs_different(expr * xi, expr * xj);
     app * mk_oneparent(expr * Z, std::vector<expr*> & xlocs);
     app * mk_stopleaves(expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
+private:
+    void add_tree_full(expr * ex, expr * const * args, unsigned num);
+    void add_tree_uf(expr * ex, expr * const * args, unsigned num);
 };
 
 #endif //TREE_ENCODER_H_

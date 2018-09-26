@@ -14,6 +14,14 @@
 #include "ast/pb_decl_plugin.h"
 #include "ast/seq_decl_plugin.h"
 #include "ast/rewriter/bool_rewriter.h"
+
+enum sl_enc_level {
+    SL_LEVEL_FULL = 100,
+    SL_LEVEL_FOOTPRINTS = 90,
+    SL_LEVEL_UF = 80,
+    SL_LEVEL_INVALID = 100
+};
+
 #include "ast/slstar/pred_encoder.h"
 #include "ast/slstar/list_encoder.h"
 #include "ast/slstar/tree_encoder.h"
@@ -82,6 +90,7 @@ public:
 
     slstar_util              util;
     array_util               m_arrayutil;
+    sl_enc_level             current_level;
 
     slstar_encoder(ast_manager & m, sort * loc_sort);
     ~slstar_encoder();
@@ -106,12 +115,10 @@ public:
     void clear_loc_vars();
     void clear_X_vector();
 
-    void prepare(sl_bounds bd);
+    void prepare(sl_bounds bd, sl_enc_level level);
     void encode_top(expr * current, expr_ref & new_ex);
     void encode(expr * ex);
 
-    void add_tree(expr * ex, expr * const * args, unsigned num);
-    void add_list(expr * ex, expr * const * args, unsigned num);
     void add_const(expr * ex);
     void add_floc_fdat(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
     void add_eq(expr * ex, expr * const * args, unsigned num);         /* T_N^s */
@@ -130,8 +137,10 @@ public:
 private:
     bool is_any_spatial(expr * const * args, unsigned num);
     bool is_any_rewritten(expr * const * args, unsigned num);
+    sl_enc_level get_lowest_level(expr * const * args, unsigned num);
     func_decl * get_f_dat(sort * sort);
 };
+
 
 class sl_enc{
 public:
@@ -145,9 +154,9 @@ public:
     bool is_rewritten;
     bool needs_tree_footprint;
     bool needs_list_footprint;
+    sl_enc_level level;
 
-
-    sl_enc(ast_manager & m, slstar_encoder & enc, sl_bounds & bounds);
+    sl_enc(ast_manager & m, slstar_encoder & enc, bool trees, bool lists );
     ~sl_enc();
 private:
 
@@ -158,6 +167,8 @@ private:
     void inc_ref();
     void dec_ref();
     friend class slstar_encoder;
+    friend class list_encoder;
+    friend class tree_encoder;
 };
 
 #endif //SLSTAR_ENCODER_H_ 

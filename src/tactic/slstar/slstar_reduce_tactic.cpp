@@ -25,6 +25,7 @@ class slstar_tactic : public tactic {
         bool              m_proofs_enabled;
         bool              m_produce_models;
         bool              m_produce_unsat_cores;
+        params_ref        m_param;
         equality_bin_map_ref equality_bins;
 
         imp(ast_manager & _m, equality_bin_map_ref eq_bins, params_ref const & p):
@@ -33,6 +34,7 @@ class slstar_tactic : public tactic {
             m_proofs_enabled(false),
             m_produce_models(false),
             m_produce_unsat_cores(false),
+            m_param(p),
             equality_bins(eq_bins) { 
             }
 
@@ -259,6 +261,51 @@ class slstar_tactic : public tactic {
             return true;
         }
 
+        void perform_encoding(slstar_encoder & encoder, goal_ref const & g, goal_ref_buffer & result, bool contains_calls) {
+            
+            goal* goal_tmp = alloc(goal, *g, false);
+
+            expr_ref   new_curr(m);
+            //proof_ref  new_pr(m);
+            unsigned size = g->size();
+            for (unsigned idx = 0; idx < size; idx++) {
+                if (g->inconsistent())
+                    break;
+                expr * curr = g->form(idx);
+                encoder.encode_top(curr, new_curr);
+
+                goal_tmp->assert_expr(new_curr);
+            }
+            
+            // assert the equalness of all substituted locations
+            std::unordered_set<equality_bin> seen;
+            for(auto it=equality_bins->begin(); it!=equality_bins->end(); ++it) {
+                if( seen.find(it->second)!=seen.end()){
+                    continue;
+                }
+                seen.emplace(it->second);
+                std::vector<expr*> eq_args;
+                //eq_args.reserve(it->second->size());
+                for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
+                    eq_args.push_back(encoder.mk_encoded_loc(*jt));
+                }
+                // e.g. (= x x) -> (= x) invalid
+                if(eq_args.size()>=2) {
+                    goal_tmp->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
+                }
+
+            }
+
+            if(contains_calls) {
+                goal_tmp->assert_expr(encoder.mk_global_constraints());
+            }
+            g->reset();
+
+            goal_tmp->inc_depth();
+
+            result.push_back(goal_tmp);
+        }
+
         void operator()(goal_ref const & g,
                         goal_ref_buffer & result,
                         model_converter_ref & mc,
@@ -286,59 +333,99 @@ class slstar_tactic : public tactic {
                 return;
             }
 
-            expr_ref   new_curr(m);
+            slstar_encoder    encoder(m, loc_sort );           
 
-            slstar_encoder    encoder(m, loc_sort );
-            
-            encoder.prepare(bd);
-            //proof_ref  new_pr(m);
-            unsigned size = g->size();
-            for (unsigned idx = 0; idx < size; idx++) {
-                if (g->inconsistent())
-                    break;
-                expr * curr = g->form(idx);
-                encoder.encode_top(curr, new_curr);
-                //if (m_proofs_enabled) {
-                //    proof * pr = g->pr(idx);
-                //    new_pr     = m.mk_modus_ponens(pr, new_pr);
-                //}
-                g->update(idx, new_curr, nullptr, g->dep(idx));
+            static const sl_enc_level levels[] = {SL_LEVEL_FULL};
+
+            for(unsigned i = 0; i<sizeof(levels)/sizeof(sl_enc_level); i++) {                
+                encoder.prepare(bd, levels[i]);
+                perform_encoding(encoder, g, result, bd.contains_calls);
+
+                
+                if(levels[i] != SL_LEVEL_FULL) {
+                    goal_ref_buffer tmp_result;
+                    goal_ref tmp_goal_in(result[0]);
+                    tactic* t = mk_default_tactic(m,m_param);
+                    (*t)(tmp_goal_in, tmp_result, mc, pc, core);
+                    
+                    SASSERT(tmp_result.size() == 1);
+
+                    if(tmp_result[0]->is_decided_unsat()) {
+                        result.reset();
+                        result.append(tmp_result);
+
+                        tmp_result.reset();
+                        encoder.clear_enc_dict();
+                        return;
+                    }
+                    tmp_result.reset();
+                    result.reset();
+                }
             }
-            
-            // assert the equalness of all substituted locations
+
+            encoder.clear_enc_dict();
+
+            // release reference to equality symbols
             std::unordered_set<equality_bin> seen;
             for(auto it=equality_bins->begin(); it!=equality_bins->end(); ++it) {
                 if( seen.find(it->second)!=seen.end()){
                     continue;
                 }
                 seen.emplace(it->second);
-                std::vector<expr*> eq_args;
-                //eq_args.reserve(it->second->size());
-                for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
-                    eq_args.push_back(encoder.mk_encoded_loc(*jt));
-                }
-                g->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
                 for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
                     m.dec_ref(*jt);
                 }
             }
 
-            encoder.clear_enc_dict();
-            if(bd.contains_calls) {
-                g->assert_expr(encoder.mk_global_constraints());
-            }
 
-            if (g->models_enabled() && !g->inconsistent())
+            if (g->models_enabled() && !g->inconsistent()) {
                 mc = alloc(slstar_model_converter, m, encoder);
+            }
+            
+            //expr_ref   new_curr(m);
+            //unsigned size = g->size();
+            //for (unsigned idx = 0; idx < size; idx++) {
+            //    if (g->inconsistent())
+            //        break;
+            //    expr * curr = g->form(idx);
+            //    encoder.encode_top(curr, new_curr);
+            //    g->update(idx, new_curr, nullptr, g->dep(idx));
+            //}
+            //
+            //// assert the equalness of all substituted locations
+            //std::unordered_set<equality_bin> seen;
+            //for(auto it=equality_bins->begin(); it!=equality_bins->end(); ++it) {
+            //    if( seen.find(it->second)!=seen.end()){
+            //        continue;
+            //    }
+            //    seen.emplace(it->second);
+            //    std::vector<expr*> eq_args;
+            //    //eq_args.reserve(it->second->size());
+            //    for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
+            //        eq_args.push_back(encoder.mk_encoded_loc(*jt));
+            //    }
+            //    // e.g. (= x x) -> (= x) invalid
+            //    if(eq_args.size()>=2) {
+            //        g->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
+            //    }
+            //    for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
+            //        m.dec_ref(*jt);
+            //    }
+            //}
+//
+            //encoder.clear_enc_dict();
+            //if(bd.contains_calls) {
+            //    g->assert_expr(encoder.mk_global_constraints());
+            //}
+//
+            //g->inc_depth();
+            //result.push_back(g.get());
+//
 
-            g->inc_depth();
-            result.push_back(g.get());
-
-            //for (unsigned i = 0; i < m_conv.m_extra_assertions.size(); i++)
-            //    result.back()->assert_expr(m_conv.m_extra_assertions[i].get());
 
             SASSERT(g->is_well_sorted());
-            TRACE("slstar", tout << "AFTER: " << std::endl; g->display(tout);
+            //SASSERT(g->is_well_sorted()); TODO_goal
+            TRACE("slstar", tout << "AFTER: " << std::endl; result[0]->display(tout);
                             if (mc) mc->display(tout); tout << std::endl; );
 
         }
@@ -453,7 +540,8 @@ tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
 
     std::shared_ptr<equality_bin_map> equalities( new equality_bin_map() );
 
-    tactic * st = and_then( mk_simplify_tactic(m, p),
+    tactic * st = and_then( /*mk_simplify_tactic(m, p),
+                            mk_propagate_values_tactic(m, p),*/
                             mk_slstar_spatial_eq_propagation_tactic(m, equalities),
                             mk_slstar_tactic(m, equalities, p),
                             mk_propagate_values_tactic(m, p),

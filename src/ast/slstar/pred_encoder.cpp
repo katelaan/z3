@@ -100,7 +100,9 @@ app * pred_encoder::mk_footprint(expr * xenc,
         func_decl * rN = prev_reach[prev_reach.size()-1];
         expr * reachargs[] = {xenc, xlocs[i]};
         andargs.push_back( m.mk_iff(enc.mk_is_element(xlocs[i], Z), 
-            m.mk_or(m.mk_eq(xenc, xlocs[i]), m.mk_app(rN, reachargs))) );
+            m.mk_or(
+                m.mk_eq(xenc, xlocs[i]), 
+                m.mk_app(rN, reachargs))) );
     }
 
     return m.mk_and( 
