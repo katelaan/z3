@@ -160,6 +160,8 @@ void slstar_encoder::encode(expr * ex) {
             return;
         }
         // TODOsl remove old encoding
+        encoding.erase(it);
+        delete it->second;
     }
     app * t = to_app(ex);
     unsigned num = t->get_num_args();
@@ -226,15 +228,19 @@ void slstar_encoder::clear_enc_dict() {
 }
 
 void slstar_encoder::clear_loc_vars(){
-    for(auto it=list_locs.begin(); it!=list_locs.end(); it++){
+    for(auto it=list_locs.begin(); it!=list_locs.end(); ++it){
         m.dec_ref(*it);
     }
     list_locs.clear();
 
-    for(auto it=tree_locs.begin(); it!=tree_locs.end(); it++){
+    for(auto it=tree_locs.begin(); it!=tree_locs.end(); ++it){
         m.dec_ref(*it);
     }
     tree_locs.clear();
+
+    for(auto it=locencoding.begin(); it!=locencoding.end(); ++it){
+        m.dec_ref(it->second);
+    }
 }
 
 slstar_encoder::~slstar_encoder() {
@@ -343,6 +349,7 @@ app * slstar_encoder::mk_encoded_loc(expr * x) {
 #if defined(Z3DEBUG)
     encodedlocs.emplace(fresh); //TODOsl delete
 #endif
+    m.inc_ref(fresh);
     return fresh;
 }
 
@@ -723,10 +730,10 @@ bool slstar_encoder::is_any_rewritten(expr * const * args, unsigned num) {
 }
 
 sl_enc_level slstar_encoder::get_lowest_level(expr * const * args, unsigned num) {
-    sl_enc_level ret = SL_LEVEL_INVALID;
+    sl_enc_level ret = SL_LEVEL_FULL;
     for(unsigned i=0; i<num; i++) {
         SASSERT(encoding.find(args[i]) != encoding.end());
-        if(encoding[args[i]]->level >= ret) {
+        if(encoding[args[i]]->level < ret) {
             ret = encoding[args[i]]->level;
         }
     }

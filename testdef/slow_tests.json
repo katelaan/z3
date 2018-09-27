@@ -17,6 +17,12 @@
             "file": "unsat/list-not-list-eq2.smt2",
             "traces": [],
             "stdout":"unsat\n"
+        },
+        {
+            "name": "ListListListNotList",
+            "file": "unsat/list_list_list_not_list.smt2",
+            "traces": [],
+            "stdout":"unsat\n"
         }
     ]
 }

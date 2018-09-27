@@ -263,10 +263,9 @@ class slstar_tactic : public tactic {
 
         void perform_encoding(slstar_encoder & encoder, goal_ref const & g, goal_ref_buffer & result, bool contains_calls) {
             
-            //goal* goal_tmp = alloc(goal, *g, false);
+            goal* goal_tmp = alloc(goal, *g, false);
 
             expr_ref   new_curr(m);
-            //proof_ref  new_pr(m);
             unsigned size = g->size();
             for (unsigned idx = 0; idx < size; idx++) {
                 if (g->inconsistent())
@@ -274,8 +273,7 @@ class slstar_tactic : public tactic {
                 expr * curr = g->form(idx);
                 encoder.encode_top(curr, new_curr);
 
-                //goal_tmp->assert_expr(new_curr);
-                g->update(idx, new_curr, nullptr, g->dep(idx));
+                goal_tmp->assert_expr(new_curr);
             }
             
             // assert the equalness of all substituted locations
@@ -292,23 +290,32 @@ class slstar_tactic : public tactic {
                 }
                 // e.g. (= x x) -> (= x) invalid
                 if(eq_args.size()>=2) {
-                    //goal_tmp->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
-                    g->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
+                    goal_tmp->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
                 }
 
             }
 
             if(contains_calls) {
-                //goal_tmp->assert_expr(encoder.mk_global_constraints());
-                g->assert_expr(encoder.mk_global_constraints());
+                goal_tmp->assert_expr(encoder.mk_global_constraints());
             }
-            //g->reset();
 
-            //goal_tmp->inc_depth();
-            g->inc_depth();
+            goal_tmp->inc_depth();
 
-            //result.push_back(goal_tmp);
-            result.push_back(g.get());
+            result.push_back(goal_tmp);
+        }
+
+        void release_eq_symbols() {
+            // release reference to equality symbols
+            std::unordered_set<equality_bin> seen;
+            for(auto it=equality_bins->begin(); it!=equality_bins->end(); ++it) {
+                if( seen.find(it->second)!=seen.end()){
+                    continue;
+                }
+                seen.emplace(it->second);
+                for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
+                    m.dec_ref(*jt);
+                }
+            }
         }
 
         void operator()(goal_ref const & g,
@@ -340,7 +347,7 @@ class slstar_tactic : public tactic {
 
             slstar_encoder    encoder(m, loc_sort );           
 
-            static const sl_enc_level levels[] = {SL_LEVEL_FULL};
+            static const sl_enc_level levels[] = {SL_LEVEL_UF, SL_LEVEL_FULL};
 
             for(unsigned i = 0; i<sizeof(levels)/sizeof(sl_enc_level); i++) {                
                 encoder.prepare(bd, levels[i]);
@@ -350,9 +357,10 @@ class slstar_tactic : public tactic {
                 if(levels[i] != SL_LEVEL_FULL) {
                     goal_ref_buffer tmp_result;
                     goal_ref tmp_goal_in(result[0]);
-                    tactic* t = mk_default_tactic(m,m_param);
+                    //tactic* t = mk_default_tactic(m,m_param);
+                    tactic* t = mk_smt_tactic(m_param);
                     (*t)(tmp_goal_in, tmp_result, mc, pc, core);
-                    
+                    t->cleanup();
                     SASSERT(tmp_result.size() == 1);
 
                     if(tmp_result[0]->is_decided_unsat()) {
@@ -361,6 +369,7 @@ class slstar_tactic : public tactic {
 
                         tmp_result.reset();
                         encoder.clear_enc_dict();
+                        release_eq_symbols();
                         return;
                     }
                     tmp_result.reset();
@@ -369,67 +378,13 @@ class slstar_tactic : public tactic {
             }
 
             encoder.clear_enc_dict();
-
-            // release reference to equality symbols
-            std::unordered_set<equality_bin> seen;
-            for(auto it=equality_bins->begin(); it!=equality_bins->end(); ++it) {
-                if( seen.find(it->second)!=seen.end()){
-                    continue;
-                }
-                seen.emplace(it->second);
-                for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
-                    m.dec_ref(*jt);
-                }
-            }
-
+            release_eq_symbols();
 
             if (g->models_enabled() && !g->inconsistent()) {
                 mc = alloc(slstar_model_converter, m, encoder);
             }
-            
-            //expr_ref   new_curr(m);
-            //unsigned size = g->size();
-            //for (unsigned idx = 0; idx < size; idx++) {
-            //    if (g->inconsistent())
-            //        break;
-            //    expr * curr = g->form(idx);
-            //    encoder.encode_top(curr, new_curr);
-            //    g->update(idx, new_curr, nullptr, g->dep(idx));
-            //}
-            //
-            //// assert the equalness of all substituted locations
-            //std::unordered_set<equality_bin> seen;
-            //for(auto it=equality_bins->begin(); it!=equality_bins->end(); ++it) {
-            //    if( seen.find(it->second)!=seen.end()){
-            //        continue;
-            //    }
-            //    seen.emplace(it->second);
-            //    std::vector<expr*> eq_args;
-            //    //eq_args.reserve(it->second->size());
-            //    for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
-            //        eq_args.push_back(encoder.mk_encoded_loc(*jt));
-            //    }
-            //    // e.g. (= x x) -> (= x) invalid
-            //    if(eq_args.size()>=2) {
-            //        g->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
-            //    }
-            //    for(auto jt = it->second->begin(); jt != it->second->end(); ++jt){
-            //        m.dec_ref(*jt);
-            //    }
-            //}
-//
-            //encoder.clear_enc_dict();
-            //if(bd.contains_calls) {
-            //    g->assert_expr(encoder.mk_global_constraints());
-            //}
-//
-            //g->inc_depth();
-            //result.push_back(g.get());
-//
-
 
             SASSERT(g->is_well_sorted());
-            //SASSERT(g->is_well_sorted()); TODO_goal
             TRACE("slstar", tout << "AFTER: " << std::endl; result[0]->display(tout);
                             if (mc) mc->display(tout); tout << std::endl; );
 
