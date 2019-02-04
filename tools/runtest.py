@@ -16,7 +16,7 @@ FAIL = '\033[91m'
 ENDC = '\033[0m'
 BOLD = '\033[1m'
 UNDERLINE = '\033[4m'
-        
+
 TEST_DEF = r"([A-Za-z0-9\-]+) ([a-zA-Z /.0-9-_]+.smt2)"
 ASSERT_DEF = r"[\s]+([a-zA-Z0-9-_]+) ((.*?;)+)"
 
@@ -26,6 +26,9 @@ TRACEEND = r"------------------------------------------------"
 Z3_ARRAY_DEF = r"^\s*\(define-fun ([A-Za-z]+) \(\) Array$$"
 
 PATHPREFIX = '../benchmarks/'
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 class Assert(object):
 
@@ -68,29 +71,29 @@ class TraceTag(object):
         self.asserts = []
 
     def test(self, trace_out):
-        sys.stdout.write("  "*1 + self.tagname + ":")
+        print("  "*1 + self.tagname + ":", end='')
         if not trace_out:
-            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " no traces left in file!\n")
+            print(" " + FAIL +"FAIL"+ENDC + " no traces left in file!")
             return False
         if trace_out.tagname != self.tagname:
-            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " unexpected trace tag!\n")
+            print(" " + FAIL +"FAIL"+ENDC + " unexpected trace tag!")
             return False
 
         m = re.search(self.message, trace_out.message)
-        
+
         if not m:
-            sys.stdout.write(" " + FAIL +"FAIL"+ENDC + " unexpected trace message!")
+            print(" " + FAIL +"FAIL"+ENDC + " unexpected trace message!")
             return False
 
         ret = True
         for a in self.asserts:
             result,reason = a.test(m)
             if result:
-                sys.stdout.write(" " + GREEN +"OK"+ENDC)
+                print(" " + GREEN +"OK"+ENDC, end='')
             else:
-                sys.stdout.write(" " + FAIL +"FAIL"+ENDC + reason)
+                print(" " + FAIL +"FAIL"+ENDC + reason, end='')
                 ret = False
-        sys.stdout.write("\n")
+        print()
         return ret
 
 
@@ -104,33 +107,36 @@ class Test(object):
         self.traces = []
 
     def runtest(self):
-        traces = set()
-        for trace in self.traces:
-            traces.add("-tr:"+trace.tagname)
-
-        sys.stdout.write(BLUE+"Test '" + self.name + "' ("+self.smtfile+"):\n"+ ENDC)
+        print(BLUE+"Test '" + self.name + "' ("+self.smtfile+"):"+ ENDC)
         #print([Z3_BIN,self.smtfile] + list(traces))
         #stdout_is = ""
-        p = psutil.Popen([Z3_BIN, self.smtfile] + list(traces), stdout=sp.PIPE)
-        stdout_is = p.stdout.read().decode("utf-8")
-        self.print_process_info(p)
-        
-        self.test_stdout(stdout_is)
+        if not os.path.isfile(self.smtfile):
+            print(FAIL + '  Skiping test -- file does not exist' + ENDC)
+        else:
+            traces = {"-tr:"+trace.tagname for trace in self.traces}
+            p = psutil.Popen([Z3_BIN, self.smtfile] + list(traces), stdout=sp.PIPE)
+            stdout_is = p.stdout.read().decode("utf-8")
+            self.print_process_info(p)
 
+            self.test_stdout(stdout_is)
+            self._check_tags()
+
+    def _check_tags(self):
         try:
             f = open(".z3-trace")
         except:
-            sys.stdout.write("  "*2 + FAIL +"FAIL"+ENDC + " no trace file generated!\n")
-
-        for trace in self.traces:
-            trace.test(read_next_tag(f))
-        f.close()
+            print("  "*2 + FAIL +"FAIL"+ENDC + " no trace file generated!")
+        else:
+            for trace in self.traces:
+                trace.test(read_next_tag(f))
+        finally:
+            f.close()
 
     def print_process_info(self, p):
         time = p.cpu_times().user
         ret = p.wait()
-        sys.stdout.write("  process return code: {}\n".format(ret))
-        sys.stdout.write("  total runtime (user): {}\n".format(time))
+        print("  process return code: {}".format(ret))
+        print("  total runtime (user): {}".format(time))
 
 
     def test_stdout(self, stdout_is):
@@ -138,29 +144,28 @@ class Test(object):
             self.stdout_test_model(stdout_is)
         elif(self.stdout):
             self.stdout_diff(stdout_is)
-    
+
     def stdout_diff(self,stdout_is):
         stdout_is_list = stdout_is.splitlines(keepends=True)
         self.stdout = self.stdout.splitlines(keepends=True)
         diff = list( difflib.ndiff(self.stdout, stdout_is_list) )
 
         if len(diff) > 1 or len(stdout_is_list) != len(self.stdout):
-            sys.stdout.write("  "*1 + "stdout: " + FAIL+"FAIL"+ENDC + "\n")
-            
+            print("  "*1 + "stdout: " + FAIL+"FAIL"+ENDC + "")
             print("+++ stdout_is\n--- stdout_expected")
             print(''.join(diff), end="")
             print("--------")
         else:
-            sys.stdout.write("  "*1 + "stdout: " + GREEN+"OK"+ENDC + "\n")
+            print("  "*1 + "stdout: " + GREEN+"OK"+ENDC)
 
     def stdout_test_model(self,stdout_is):
-        
-        sys.stdout.write("  "*1 + "model: ")
+
+        print("  "*1 + "model: ", end='')
         if not stdout_is.startswith("sat\n(model \n"):
-            sys.stdout.write(FAIL+"FAIL"+ENDC + " could not parse model\n")
+            print(FAIL+"FAIL"+ENDC + " could not parse model")
             return
-        sys.stdout.write('\n')
-        
+        print()
+
         model_lines = stdout_is[12:-2].split('\n')
         next_line_is_def = False
         # translate array definitions to store calls
@@ -195,26 +200,22 @@ class Test(object):
 
         try:
             for model_assertion in self.model:
-                sys.stdout.write("  "*2 + model_assertion + ": ")
+                print("  "*2 + model_assertion + ": ", end='')
                 tmp = modelstring + "\n" + "(assert (not {}))".format(model_assertion)
+                #print('Validating model: Will check expression\n' + tmp)
                 expr = z3.parse_smt2_string(tmp)
-                if(z3.is_true(expr)):
-                     sys.stdout.write(GREEN+"OK"+ENDC + "\n")
+
+                s = z3.Solver()
+                s.add(expr)
+                result = s.check()
+                if result == z3.unsat:
+                    print(GREEN+"OK"+ENDC)
+                elif result == z3.sat:
+                    print(FAIL+"FAIL"+ENDC)
                 else:
-                    s = z3.Solver()
-                    s.add(expr)
-                    result = s.check()
-                    if result == z3.unsat:
-                        sys.stdout.write(GREEN+"OK"+ENDC + "\n")
-                    elif result == z3.sat:
-                        sys.stdout.write(FAIL+"FAIL"+ENDC + "\n")
-                    else:
-                        sys.stdout.write(WARN+"INCONCLUSIVE"+ENDC + "\n")
+                    print(WARN+"INCONCLUSIVE"+ENDC)
         except z3.Z3Exception as e:
-            sys.stderr.write("{}".format(e))
-            sys.stderr.write("\n")
-        sys.stdout.write('\n')
-        
+            eprint("{}".format(e))
 
 
 class TraceOut(object):
@@ -276,16 +277,34 @@ def read_next_tag(f):
             break
         t.message += line
     return t
-    
 
-if len(sys.argv)!=2:
-    print("usage: %s testdef.txt")
-path = sys.argv[1]
-f = open(path)
-jf = json.load(f)
-f.close()
 
-tests = read_tests(jf)
+def run_tests_in_file(path):
+    with open(path) as f:
+        jf = json.load(f)
+        tests = read_tests(jf)
 
-for t in tests:
-    t.runtest()
+        for t in tests:
+            t.runtest()
+
+def json_files_in(path):
+    return [os.path.join(path,f) for f in os.listdir(path)
+            if os.path.isfile(os.path.join(path, f))
+            if 'json' in f]
+
+def command_line_arg_to_paths(arg):
+    if arg == 'all':
+        return json_files_in('../testdef')
+    else:
+        return [arg]
+
+if __name__ == '__main__':
+    if len(sys.argv)!=2:
+        print("usage: %s testdef.json")
+        exit()
+
+    arg = sys.argv[1]
+    paths = command_line_arg_to_paths(arg)
+    for path in paths:
+        print(BOLD + 'Running tests in {}'.format(path) + ENDC)
+        run_tests_in_file(path)
