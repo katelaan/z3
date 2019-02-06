@@ -1,0 +1,7 @@
+def_module_params('slstar',
+                  description='solving SL*',
+                  export=True,
+                  params=(
+                          ('propagateeqs', BOOL, True, 'propagate equalities between locations prior to encoding'),
+                          ))
+

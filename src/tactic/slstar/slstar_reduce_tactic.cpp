@@ -494,9 +494,9 @@ tactic * mk_slstar_tactic(ast_manager & m, equality_bin_map_ref eq_bins, params_
 }
 
 tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
-    params_ref simp_p = p;
-    simp_p.set_bool("arith_lhs", true);
-    simp_p.set_bool("elim_and", true);
+    TRACE("slstar", p.display(tout););
+    bool propeqs = p.get_bool("slstar.propagateeqs", false);
+    TRACE("slstar",  tout << "Will propagate equalities: " << propeqs;);
 
     std::shared_ptr<equality_bin_map> equalities( new equality_bin_map() );
 

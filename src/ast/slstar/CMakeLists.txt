@@ -10,5 +10,5 @@ z3_add_component(slstar
     model
     util
   PYG_FILES
-    #[[fpa2bv_rewriter_params.pyg]]
+    slstar_params.pyg
 )
