@@ -19,7 +19,7 @@
 ;                    (sl.sepcon (sl.tree.data l ldata)
 ;                               (sl.tree.data r rdata)))))
 
-
+(set-logic SLSTAR)
 (declare-const x TreeLoc)
 (declare-const l TreeLoc)
 (declare-const r TreeLoc)
@@ -41,3 +41,5 @@
             (ptod r rdata)
             (ptod l ldata) ))
 
+(check-sat)
+(get-model)
