@@ -106,11 +106,7 @@ class slstar_spatial_eq_propagation_tactic : public tactic {
         }
     }
 
-    void operator()(goal_ref const & g,
-                goal_ref_buffer & result,
-                model_converter_ref & mc,
-                proof_converter_ref & pc,
-                expr_dependency_ref & core) 
+    void operator()(goal_ref const & g, goal_ref_buffer& result) override
     {
         find_equalities(g);
 

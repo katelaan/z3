@@ -320,16 +320,13 @@ class slstar_tactic : public tactic {
 
         void operator()(goal_ref const & g,
                         goal_ref_buffer & result,
-                        model_converter_ref & mc,
-                        proof_converter_ref & pc,
-                        expr_dependency_ref & core,
                         sort* loc_sort) {
             SASSERT(g->is_well_sorted());
             m_proofs_enabled      = g->proofs_enabled();
             m_produce_models      = g->models_enabled();
             m_produce_unsat_cores = g->unsat_core_enabled();
 
-            mc = nullptr; pc = nullptr; core = nullptr; result.reset();
+            result.reset();
             tactic_report report("slstar_reduce", *g);
 
             TRACE("slstar", tout << "BEFORE: " << std::endl; g->display(tout););
@@ -349,17 +346,17 @@ class slstar_tactic : public tactic {
 
             static const sl_enc_level levels[] = {SL_LEVEL_UF, SL_LEVEL_FULL};
 
-            for(unsigned i = 0; i<sizeof(levels)/sizeof(sl_enc_level); i++) {                
+            for (unsigned i = 0; i<sizeof(levels)/sizeof(sl_enc_level); i++) {                
                 encoder.prepare(bd, levels[i]);
                 perform_encoding(encoder, g, result, bd.contains_calls);
 
                 
-                if(levels[i] != SL_LEVEL_FULL) {
+                if (levels[i] != SL_LEVEL_FULL) {
                     goal_ref_buffer tmp_result;
                     goal_ref tmp_goal_in(result[0]);
                     //tactic* t = mk_default_tactic(m,m_param);
-                    tactic* t = mk_smt_tactic(m_param);
-                    (*t)(tmp_goal_in, tmp_result, mc, pc, core);
+                    tactic* t = mk_smt_tactic(m, m_param);
+                    (*t)(tmp_goal_in, tmp_result);
                     t->cleanup();
                     SASSERT(tmp_result.size() == 1);
 
@@ -380,14 +377,13 @@ class slstar_tactic : public tactic {
             encoder.clear_enc_dict();
             release_eq_symbols();
 
-            if (g->models_enabled() && !g->inconsistent()) {
-                mc = alloc(slstar_model_converter, m, encoder);
-            }
-
             SASSERT(g->is_well_sorted());
-            TRACE("slstar", tout << "AFTER: " << std::endl; result[0]->display(tout);
-                            if (mc) mc->display(tout); tout << std::endl; );
 
+            if (g->models_enabled() && !g->inconsistent()) {
+                slstar_model_converter* mc = alloc(slstar_model_converter, m, encoder);
+                TRACE("slstar", tout << "AFTER: " << std::endl; result[0]->display(tout);
+                            if (mc) mc->display(tout); tout << std::endl; );
+            }
         }
     };
 
@@ -423,12 +419,9 @@ public:
     }
 
     void operator()(goal_ref const & in,
-                    goal_ref_buffer & result,
-                    model_converter_ref & mc,
-                    proof_converter_ref & pc,
-                    expr_dependency_ref & core) override {
+                    goal_ref_buffer & result) override {
         try {
-            (*m_imp)(in, result, mc, pc, core, slstar_decl_plugin::get_loc_sort(&m));
+            (*m_imp)(in, result, slstar_decl_plugin::get_loc_sort(&m));
         }
         catch (rewriter_exception & ex) {
             throw tactic_exception(ex.msg());
@@ -512,8 +505,6 @@ tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
 }
 
 
-
-
 //Debug code
 class print_tactic : public tactic {
     public:
@@ -525,10 +516,7 @@ class print_tactic : public tactic {
         name = _name;
     }
     void operator()(goal_ref const & g,
-                goal_ref_buffer & result,
-                model_converter_ref & mc,
-                proof_converter_ref & pc,
-                expr_dependency_ref & core) {
+                goal_ref_buffer & result) override {
         std::cout << "-" << name << "-" << std::endl;
         g->display(std::cout);
         std::cout << "-------" << std::endl;

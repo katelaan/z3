@@ -277,7 +277,7 @@ isless::isless(ast_manager & m, model * mc) : m(m), mc(mc), au(m) {
 bool isless::operator()(expr * a, expr * b) {
     expr_ref   result(m);
     expr * e = au.mk_lt(a,b);
-    mc->eval(e, result);
+    mc->eval_expr(e, result);
     m.inc_ref(e);
     m.dec_ref(e);
     return m.is_true(result.get());

@@ -19,13 +19,14 @@ Revision History:
 #include "smt/smt_clause.h"
 #include "smt/smt_justification.h"
 #include "ast/ast_ll_pp.h"
+#include "ast/ast_pp.h"
 
 namespace smt {
     /**
        \brief Create a new clause.
        bool_var2expr_map is a mapping from bool_var -> expr, it is only used if save_atoms == true.
     */
-    clause * clause::mk(ast_manager & m, unsigned num_lits, literal * lits, clause_kind k, justification * js, 
+    clause * clause::mk(ast_manager & m, unsigned num_lits, literal * lits, clause_kind k, justification * js,
                         clause_del_eh * del_eh, bool save_atoms, expr * const * bool_var2expr_map) {
         SASSERT(k == CLS_AUX || js == 0 || !js->in_region());
         SASSERT(num_lits >= 2);
@@ -67,7 +68,7 @@ namespace smt {
             }});
         return cls;
     }
-    
+
     void clause::deallocate(ast_manager & m) {
         clause_del_eh * del_eh = get_del_eh();
         if (del_eh)
@@ -96,23 +97,33 @@ namespace smt {
         }
     }
 
-    void clause::display(std::ostream & out, ast_manager & m, expr * const * bool_var2expr_map) const {
+    std::ostream& clause::display(std::ostream & out, ast_manager & m, expr * const * bool_var2expr_map) const {
         out << "(clause";
         for (unsigned i = 0; i < m_num_literals; i++) {
             out << " ";
             m_lits[i].display(out, m, bool_var2expr_map);
         }
-        out << ")";
+        return out << ")";
     }
 
-    void clause::display_compact(std::ostream & out, ast_manager & m, expr * const * bool_var2expr_map) const {
+    std::ostream& clause::display_compact(std::ostream & out, ast_manager & m, expr * const * bool_var2expr_map) const {
         out << "(clause";
         for (unsigned i = 0; i < m_num_literals; i++) {
             out << " ";
             m_lits[i].display_compact(out, bool_var2expr_map);
         }
-        out << ")";
+        return out << ")";
+    }
+
+    std::ostream& clause::display_smt2(std::ostream & out, ast_manager & m, expr * const * bool_var2expr_map) const {
+        expr_ref_vector args(m);
+        for (unsigned i = 0; i < m_num_literals; i++) {
+            literal lit = m_lits[i];
+            args.push_back(bool_var2expr_map[lit.var()]);
+            if (lit.sign()) args[args.size()-1] = m.mk_not(args.back());
+        }
+        expr_ref disj(m.mk_or(args.size(), args.c_ptr()), m);
+        return out << disj;
     }
 
 };
-

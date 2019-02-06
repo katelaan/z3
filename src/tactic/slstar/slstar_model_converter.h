@@ -31,15 +31,10 @@ public:
 
     ~slstar_model_converter() override;
 
-    void operator()(model_ref & md, unsigned goal_idx) override {
-        SASSERT(goal_idx == 0);
+    void operator()(model_ref & md) override {
         model * new_model = alloc(model, m);
         convert(md.get(), new_model);
         md = new_model;
-    }
-
-    void operator()(model_ref & md) override {
-        operator()(md, 0);
     }
 
     void display(std::ostream & out) override;
