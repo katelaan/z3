@@ -3,6 +3,7 @@ z3_add_component(slstar_tactics
     slstar_reduce_tactic.cpp
     slstar_spatial_eq_propagation_tactic.cpp
     slstar_model_converter.cpp
+    slstar_bounds.cpp
   COMPONENT_DEPENDENCIES
     slstar
     arith_tactics
