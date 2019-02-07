@@ -25,7 +25,7 @@ app * pred_encoder::mk_isstop(expr * xenc, std::vector<expr*> & stops) {
 
 app * pred_encoder::mk_reach1(expr * Z, 
         std::vector<func_decl*> & prev_reach, 
-        std::vector<expr*> & xlocs, 
+        expr_ref_vector const& xlocs, 
         std::vector<expr*> & stops) 
 {
     sort * const domain[] = {enc.m_loc_sort, enc.m_loc_sort};
@@ -43,7 +43,7 @@ app * pred_encoder::mk_reach1(expr * Z,
     prev_reach.push_back(reach);
     return m.mk_and(andargs.size(), &andargs[0]);
 }
-app * pred_encoder::mk_reachN(std::vector<func_decl*> & prev_reach, std::vector<expr*> & xlocs) {
+app * pred_encoder::mk_reachN(std::vector<func_decl*> & prev_reach, expr_ref_vector const& xlocs) {
     sort * const domain[] = {enc.m_loc_sort, enc.m_loc_sort};
     func_decl * reach = m.mk_fresh_func_decl(slstar_encoder::reach_prefix.c_str(), 2, domain, m.mk_bool_sort());
     func_decl * preach = prev_reach[prev_reach.size()-1];
@@ -70,7 +70,7 @@ app * pred_encoder::mk_reachN(std::vector<func_decl*> & prev_reach, std::vector<
     return m.mk_and(andargs.size(), &andargs[0]);
 }
 
-app * pred_encoder::mk_reachability( expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops, std::vector<expr*> xlocs, int bound) {
+app * pred_encoder::mk_reachability( expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops, expr_ref_vector const& xlocs, int bound) {
     std::vector<expr*> andargs;
     if(bound > 0)
         andargs.push_back( mk_reach1(Z, prev_reach, xlocs, stops));
@@ -82,7 +82,7 @@ app * pred_encoder::mk_reachability( expr * Z, std::vector<func_decl*> & prev_re
     return m.mk_and( bound, &andargs[0]);
 }
 
-app * pred_encoder::mk_emptyZ(expr * xenc, std::vector<expr*> & xlocs, std::vector<expr*> & stops) {
+app * pred_encoder::mk_emptyZ(expr * xenc, expr_ref_vector const& xlocs, std::vector<expr*> & stops) {
     std::vector<expr*> andargs;
     for(unsigned i=0; i<xlocs.size(); i++) {
         andargs.push_back( m.mk_not(m.mk_eq(xenc,xlocs[i])) );
@@ -91,7 +91,7 @@ app * pred_encoder::mk_emptyZ(expr * xenc, std::vector<expr*> & xlocs, std::vect
 }
 app * pred_encoder::mk_footprint(expr * xenc, 
     expr * Z, 
-    std::vector<expr*> & xlocs, 
+    expr_ref_vector const& xlocs, 
     std::vector<func_decl*> & prev_reach, 
     std::vector<expr*> & stops) 
 {
@@ -106,7 +106,7 @@ app * pred_encoder::mk_footprint(expr * xenc,
     }
 
     return m.mk_and( 
-        enc.mk_subset_eq(Z, enc.mk_set_from_elements(&xlocs[0], xlocs.size())),
+        enc.mk_subset_eq(Z, enc.mk_set_from_elements(xlocs.c_ptr(), xlocs.size())),
         m.mk_implies(mk_emptyZ(xenc,xlocs, stops), enc.mk_is_empty(Z)),
         m.mk_implies(m.mk_not(mk_emptyZ(xenc,xlocs, stops)),  // TODOsl cache emptyZ?
             m.mk_and(andargs.size(), &andargs[0]) ) );
@@ -114,7 +114,7 @@ app * pred_encoder::mk_footprint(expr * xenc,
 
 app * pred_encoder::mk_structure(expr * xenc, 
     expr * Z, 
-    std::vector<expr*> & xlocs, 
+    expr_ref_vector const& xlocs, 
     std::vector<func_decl*> & prev_reach, 
     std::vector<expr*> & stops) 
 {
@@ -151,7 +151,7 @@ app * pred_encoder::mk_stopseq(expr * xenc, std::vector<expr*> & stops) {
 }
 
 
-app * pred_encoder::mk_stopsoccur(expr * xenc, expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops ) {
+app * pred_encoder::mk_stopsoccur(expr * xenc, expr * Z, expr_ref_vector const& xlocs, std::vector<expr*> & stops ) {
     std::vector<expr*> andargs, orargs;
     for(unsigned i=0; i<stops.size(); i++) {
         for(unsigned p=0; p<xlocs.size(); p++) {
@@ -172,7 +172,7 @@ app * pred_encoder::mk_Rn_f(func_decl * f, func_decl * rn, expr * x, expr * y, e
             m.mk_app(rn,reachargs)));
 }
 
-app * pred_encoder::mk_fstop(expr * xp, expr * s, func_decl * f, expr * Z, std::vector<expr*> & xlocs, 
+app * pred_encoder::mk_fstop(expr * xp, expr * s, func_decl * f, expr * Z, expr_ref_vector const& xlocs, 
         std::vector<func_decl*> & prev_reach) 
 {
     func_decl * rN = prev_reach[prev_reach.size()-1];
@@ -187,12 +187,12 @@ app * pred_encoder::mk_fstop(expr * xp, expr * s, func_decl * f, expr * Z, std::
     return m.mk_or(orargs.size(), &orargs[0]);;
 }
 
-app * pred_encoder::mk_is_location(expr* xenc, std::vector<expr*> & xlocs){
-    return enc.mk_is_element(xenc, enc.mk_set_from_elements(&xlocs[0], xlocs.size()));
+app * pred_encoder::mk_is_location(expr* xenc, expr_ref_vector const& xlocs){
+    return enc.mk_is_element(xenc, enc.mk_set_from_elements(xlocs.c_ptr(), xlocs.size()));
 }
 
 app * pred_encoder::mk_bdata(expr * Pcont, expr * Z, func_decl * f, 
-    std::vector<expr*> & xlocs, std::vector<func_decl*> & prev_reach) 
+    expr_ref_vector const& xlocs, std::vector<func_decl*> & prev_reach) 
 {
     app * P = to_app(to_app(Pcont)->get_arg(0));
     func_decl * Pdecl = P->get_decl();
@@ -224,7 +224,7 @@ app * pred_encoder::mk_bdata(expr * Pcont, expr * Z, func_decl * f,
     return m.mk_and(andargs.size(), &andargs[0]);
 }
 
-app * pred_encoder::mk_udata(expr * Pcont, expr * Z, std::vector<expr*> & xlocs) {
+app * pred_encoder::mk_udata(expr * Pcont, expr * Z, expr_ref_vector const& xlocs) {
     app * P = to_app(to_app(Pcont)->get_arg(0));
     func_decl * Pdecl = P->get_decl();
     std::vector<expr*> andargs;

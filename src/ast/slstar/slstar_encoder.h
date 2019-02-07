@@ -54,12 +54,12 @@ protected:
     bool_rewriter            m_boolrw;
     sl_bounds                bounds;
 
-    sort                   * m_array_sort = nullptr;
-    sort                   * m_loc_sort = nullptr;
+    sort_ref m_array_sort;
+    sort_ref m_loc_sort;
 
-    func_decl              * f_next = nullptr;
-    func_decl              * f_left = nullptr;
-    func_decl              * f_right = nullptr;
+    func_decl_ref f_next;
+    func_decl_ref f_left;
+    func_decl_ref f_right;
     
     std::unordered_map<sort*, func_decl*> f_dat_map;
 
@@ -69,14 +69,14 @@ protected:
 #if defined(Z3DEBUG)
     std::unordered_set<expr*>          encodedlocs;
 #endif
-    std::vector<expr*>       list_locs;
-    std::vector<expr*>       tree_locs;
+    expr_ref_vector list_locs;
+    expr_ref_vector tree_locs;
 
-    app                    * Xn = nullptr;
-    app                    * Xl = nullptr;
-    app                    * Xr = nullptr;
-    app                    * Xd = nullptr;
-    app                    * enc_null = nullptr;
+    app_ref Xn;
+    app_ref Xl;
+    app_ref Xr;
+    app_ref Xd;
+    app_ref enc_null;
 
     bool needs_tree_footprint;
     bool needs_list_footprint;

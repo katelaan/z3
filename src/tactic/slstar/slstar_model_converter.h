@@ -11,8 +11,8 @@ class slstar_model_converter : public model_converter {
     array_util m_arrayutil;
     std::unordered_set<app*>              loc_constants;
     std::unordered_set<std::string>       loc_constants_names;
-    std::vector<expr*>                    list_locs;
-    std::vector<expr*>                    tree_locs;
+    expr_ref_vector const&                list_locs;
+    expr_ref_vector const&                tree_locs;
 
     std::string                  Xn_name;
     std::string                  Xl_name;
@@ -52,7 +52,7 @@ protected:
     bool is_footprint_helper_set(const std::string s);
     bool is_footprint_helper_varlist(const std::string s);
     bool is_reach_constraint(const std::string s);
-    expr * gather_elements(std::vector<expr*> & locs, func_decl * decl, model * mc);
+    expr * gather_elements(expr_ref_vector const& locs, func_decl * decl, model * mc);
     void check_single_loc(std::vector<expr*> & elements, expr * loc, func_decl * Xdecl, model * mc);
     void emplace_array_helper(std::unordered_set<symbol> &array_helpers, model * mc, func_decl * decl);
 };

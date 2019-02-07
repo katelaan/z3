@@ -115,7 +115,7 @@ app * tree_encoder::mk_is_successor(expr * x, expr * y) {
 }
 
 app * tree_encoder::mk_ordered(expr * Z, 
-    std::vector<expr*> & xlocs, 
+    expr_ref_vector const& xlocs, 
     std::vector<expr*> & stops,
     std::vector<func_decl*> & prev_reach) 
 {
@@ -175,7 +175,7 @@ app * tree_encoder::mk_all_succs_different(expr * xi, expr * xj) {
 }
 
 
-app * tree_encoder::mk_oneparent(expr * Z, std::vector<expr*> & xlocs) {
+app * tree_encoder::mk_oneparent(expr * Z, expr_ref_vector const& xlocs) {
     std::vector<expr*> andargs;
     for(unsigned i = 0; i<xlocs.size(); i++) {
         std::vector<expr*> andargs2;
@@ -197,7 +197,7 @@ app * tree_encoder::mk_oneparent(expr * Z, std::vector<expr*> & xlocs) {
     return  m.mk_and(andargs.size(), &andargs[0]);
 }
 
-app * tree_encoder::mk_stopleaves(expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops ){
+app * tree_encoder::mk_stopleaves(expr * Z, expr_ref_vector const& xlocs, std::vector<expr*> & stops ){
     std::vector<expr*> andargs;
     for(unsigned i=0; i<xlocs.size(); i++ ) {
         andargs.push_back(m.mk_implies(

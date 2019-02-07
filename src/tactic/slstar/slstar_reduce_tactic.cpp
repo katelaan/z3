@@ -43,7 +43,7 @@ class slstar_tactic : public tactic {
             
             goal* goal_tmp = alloc(goal, *g, false);
 
-            expr_ref   new_curr(m);
+            expr_ref new_curr(m);
             unsigned size = g->size();
             for (unsigned idx = 0; idx < size; idx++) {
                 if (g->inconsistent())

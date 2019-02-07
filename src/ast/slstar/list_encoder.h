@@ -25,8 +25,8 @@ public:
     app * mk_is_successor(expr * x, expr * y);
     app * mk_defineY(sl_enc * e, expr * Z);
     app * mk_all_succs_different(expr * xi, expr * xj);
-    app * mk_oneparent(expr * Z, std::vector<expr*> & xlocs);
-    app * mk_stopleaves(expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
+    app * mk_oneparent(expr * Z, expr_ref_vector const& xlocs);
+    app * mk_stopleaves(expr * Z, expr_ref_vector const& xlocs, std::vector<expr*> & stops );
 private:
     void add_list_full(expr * ex, expr * const * args, unsigned num);
     void add_list_uf(expr * ex, expr * const * args, unsigned num);

@@ -138,7 +138,7 @@ app * list_encoder::mk_all_succs_different(expr * xi, expr * xj) {
         m.mk_eq(m.mk_app(enc.f_next,xi), enc.enc_null));
 }
 
-app * list_encoder::mk_oneparent(expr * Z, std::vector<expr*> & xlocs) {
+app * list_encoder::mk_oneparent(expr * Z, expr_ref_vector const& xlocs) {
     std::vector<expr*> andargs;
     for(unsigned i = 0; i<xlocs.size(); i++) {
         for(unsigned j = 0; j<xlocs.size(); j++) {
@@ -152,7 +152,7 @@ app * list_encoder::mk_oneparent(expr * Z, std::vector<expr*> & xlocs) {
     return  m.mk_and(andargs.size(), &andargs[0]);
 }
 
-app * list_encoder::mk_stopleaves(expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops ){
+app * list_encoder::mk_stopleaves(expr * Z, expr_ref_vector const& xlocs, std::vector<expr*> & stops ){
     std::vector<expr*> andargs;
     for(unsigned i=0; i<xlocs.size(); i++ ) {
         andargs.push_back(m.mk_implies(

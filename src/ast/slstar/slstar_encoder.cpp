@@ -9,33 +9,28 @@ const std::string slstar_encoder::X_prefix = "X";
 const std::string slstar_encoder::xl_prefix = "__xl";
 const std::string slstar_encoder::xt_prefix = "__xt";
 
-slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort) : m(m),  m_boolrw(m), util(m), m_arrayutil(m) {
+slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort) : m(m), m_boolrw(m),
+    m_array_sort(m), m_loc_sort(m), f_next(m), f_left(m), f_right(m), 
+    list_locs(m), tree_locs(m), Xn(m), Xl(m), Xr(m), Xd(m), enc_null(m),
+    util(m), m_arrayutil(m)
+ {
     auto fid = m.mk_family_id("arith");
     SASSERT(encodedlocs.size() == 0);
     SASSERT(locencoding.size() == 0);
     m_loc_sort = loc_sort;
-    m.inc_ref(m_loc_sort);
 
     vector<parameter> params;
     params.push_back(parameter(loc_sort)); //TODOsl configurable LocSort
     params.push_back(parameter(m.mk_bool_sort()));
     fid = m.mk_family_id("array");
     m_array_sort = m.mk_sort(fid, ARRAY_SORT, params.size(), params.c_ptr());
-    m.inc_ref(m_array_sort);
 
     sort * const domain[] = {loc_sort};
     
     f_next = m.mk_fresh_func_decl("f_next", 1, domain, loc_sort);
-    m.inc_ref(f_next);
-
     f_left = m.mk_fresh_func_decl("f_left", 1, domain, loc_sort);
-    m.inc_ref(f_left);
-
     f_right = m.mk_fresh_func_decl("f_right", 1, domain, loc_sort);
-    m.inc_ref(f_right);
-
     enc_null = m.mk_fresh_const("null", m_loc_sort);
-    m.inc_ref(enc_null);
 }
 
 func_decl * slstar_encoder::get_f_dat(sort * s){
@@ -228,34 +223,15 @@ void slstar_encoder::clear_enc_dict() {
 }
 
 void slstar_encoder::clear_loc_vars(){
-    for(auto it=list_locs.begin(); it!=list_locs.end(); ++it){
-        m.dec_ref(*it);
-    }
-    list_locs.clear();
-
-    for(auto it=tree_locs.begin(); it!=tree_locs.end(); ++it){
-        m.dec_ref(*it);
-    }
-    tree_locs.clear();
-
     for(auto it=locencoding.begin(); it!=locencoding.end(); ++it){
         m.dec_ref(it->second);
     }
 }
 
 slstar_encoder::~slstar_encoder() {
-    if(m_array_sort) m.dec_ref(m_array_sort);
-    if(m_loc_sort) m.dec_ref(m_loc_sort);
-
-    if(f_next) m.dec_ref(f_next);
-    if(f_left) m.dec_ref(f_left);
-    if(f_right) m.dec_ref(f_right);
-
     for(auto i = f_dat_map.begin(); i!=f_dat_map.end(); ++i) {
         m.dec_ref(i->second);
     }
-
-    if(enc_null) m.dec_ref(enc_null);
 
     clear_enc_dict();
     clear_loc_vars();

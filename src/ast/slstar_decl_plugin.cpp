@@ -177,22 +177,22 @@ func_decl * slstar_decl_plugin::mk_pred_func_decl(symbol name, std::string loc, 
 
     unsigned arg_ptr = 0;
     // most of the code below are just sort checks in order to forbid unsupported inputs
-    while( arg_ptr < arity && domain[arg_ptr]->is_sort_of(m_dpred_sort->get_family_id(), m_dpred_sort->get_decl_kind())){
+    while (arg_ptr < arity && domain[arg_ptr]->is_sort_of(m_dpred_sort->get_family_id(), m_dpred_sort->get_decl_kind())){
         arg_ptr++;
     }
     std::string msg;
-    if(arg_ptr == arity) {
+    if (arg_ptr == arity) {
         msg = "predicate needs at least one " + loc + " argument";
         m_manager->raise_exception(msg.c_str());
         return nullptr;
     }
-    while( arg_ptr < arity && (domain[arg_ptr]->is_sort_of(m_family_id, loc_k) ) ) {
+    while (arg_ptr < arity && (domain[arg_ptr]->is_sort_of(m_family_id, loc_k) ) ) {
         check_loc_sort(domain[arg_ptr]);
         arg_ptr++;
     }
     
-    if(arg_ptr != arity) {
-        msg= "invalid argument sort(s). Expected: (" + std::string(name.bare_str()) + " Dpred*, " + loc + "+) ";
+    if (arg_ptr != arity) {
+        msg = "invalid argument sort(s). Expected: (" + std::string(name.bare_str()) + " Dpred*, " + loc + "+) ";
         m_manager->raise_exception(msg.c_str());
         return nullptr;
     }

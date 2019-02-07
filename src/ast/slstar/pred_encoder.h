@@ -31,33 +31,33 @@ public:
     virtual app * mk_defineY(sl_enc * enc, expr * Z) = 0;
     app * mk_reach1(expr * Z, 
         std::vector<func_decl*> & prev_reach, 
-        std::vector<expr*> & xlocs, 
+        expr_ref_vector const& xlocs, 
         std::vector<expr*> & stops);
-    app * mk_reachN(std::vector<func_decl*> & prev_reach, std::vector<expr*> & xlocs);
-    app * mk_reachability(expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops, std::vector<expr*> xlocs, int bound);
-    app * mk_emptyZ(expr * xenc, std::vector<expr*> & xlocs, std::vector<expr*> & stops);
+    app * mk_reachN(std::vector<func_decl*> & prev_reach, expr_ref_vector const& xlocs);
+    app * mk_reachability(expr * Z, std::vector<func_decl*> & prev_reach, std::vector<expr*> & stops, expr_ref_vector const& xlocs, int bound);
+    app * mk_emptyZ(expr * xenc,expr_ref_vector const& xlocs, std::vector<expr*> & stops);
     app * mk_footprint(expr * xenc,
         expr * Z, 
-        std::vector<expr*> & xlocs, 
+        expr_ref_vector const& xlocs, 
         std::vector<func_decl*> & prev_reach, 
         std::vector<expr*> & stops);
     virtual app * mk_all_succs_different(expr * xi, expr * xj) = 0;
-    virtual app * mk_oneparent(expr * Z, std::vector<expr*> & xlocs) = 0;
+    virtual app * mk_oneparent(expr * Z, expr_ref_vector const& xlocs) = 0;
     app * mk_structure(expr * xenc, 
         expr * Z, 
-        std::vector<expr*> & xlocs, 
+        expr_ref_vector const& xlocs, 
         std::vector<func_decl*> & prev_reach, 
         std::vector<expr*> & stops);
     app * mk_stopseq(expr * xenc, std::vector<expr*> & stops);
-    app * mk_stopsoccur(expr * xenc, expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops );
-    virtual app * mk_stopleaves(expr * Z, std::vector<expr*> & xlocs, std::vector<expr*> & stops ) = 0;
+    app * mk_stopsoccur(expr * xenc, expr * Z, expr_ref_vector const& xlocs, std::vector<expr*> & stops );
+    virtual app * mk_stopleaves(expr * Z, expr_ref_vector const& xlocs, std::vector<expr*> & stops ) = 0;
     app * mk_Rn_f(func_decl * f, func_decl * rn, expr * x, expr * y, expr * Z);
-    app * mk_fstop(expr * xp, expr * s, func_decl * f, expr * Z, std::vector<expr*> & xlocs, 
+    app * mk_fstop(expr * xp, expr * s, func_decl * f, expr * Z, expr_ref_vector const& xlocs, 
         std::vector<func_decl*> & prev_reach);
-    app * mk_is_location(expr* xenc, std::vector<expr*> & xlocs);
-    app * mk_bdata(expr * P, expr * Z, func_decl * f, std::vector<expr*> & xlocs, 
+    app * mk_is_location(expr* xenc, expr_ref_vector const& xlocs);
+    app * mk_bdata(expr * P, expr * Z, func_decl * f, expr_ref_vector const& xlocs, 
         std::vector<func_decl*> & prev_reach);
-    app * mk_udata(expr * P, expr * Z, std::vector<expr*> & xlocs);
+    app * mk_udata(expr * P, expr * Z, expr_ref_vector const& xlocs);
 };
 
 #endif //PRED_ENCODER_H_

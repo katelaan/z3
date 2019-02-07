@@ -192,7 +192,7 @@ void slstar_model_converter::check_single_loc(std::vector<expr*> & elements, exp
     }
 }
 
-expr * slstar_model_converter::gather_elements(std::vector<expr*> & locs, func_decl * Xdecl, model * mc) {
+expr * slstar_model_converter::gather_elements(expr_ref_vector const& locs, func_decl * Xdecl, model * mc) {
     std::vector<expr*> elements;
 
     // check tree/list locations X={x1,x2,...,xN}
