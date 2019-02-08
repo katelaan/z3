@@ -24,9 +24,8 @@ void list_encoder::add_list_uf(expr * ex, expr * const * args, unsigned num) {
     enc->A = ex;
     enc->B = m.mk_true();
 
-    enc->inc_ref();
     enc->level = SL_LEVEL_UF;
-    this->enc.encoding[ex] = enc;
+    this->enc.cache.add_encoding(ex, enc);
 }
 
 void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
@@ -56,7 +55,7 @@ void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
         }
     }
 
-    if(this->enc.bounds.n_list == 0) {
+    if (this->enc.bounds.n_list == 0) {
         enc->B = mk_defineY(enc,nullptr);
         /* data predicates are trivally true, since we got an empty list */
         if(stops.size() == 0){
@@ -66,8 +65,7 @@ void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
         } else {
             enc->A = m.mk_false();
         }
-        enc->inc_ref();
-        this->enc.encoding[ex] = enc;
+        this->enc.cache.add_encoding(ex, enc);
         return;
     }
 
@@ -103,8 +101,7 @@ void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
     }
 
     enc->A = m.mk_and( andargs.size(), &andargs[0]);
-    enc->inc_ref();
-    this->enc.encoding[ex] = enc;
+    this->enc.cache.add_encoding(ex, enc);
 }
 
 app * list_encoder::mk_is_successor(expr * x, expr * y) {

@@ -24,9 +24,8 @@ void tree_encoder::add_tree_uf(expr * ex, expr * const * args, unsigned num) {
     enc->A = ex;
     enc->B = m.mk_true();
 
-    enc->inc_ref();
     enc->level = SL_LEVEL_UF;
-    this->enc.encoding[ex] = enc;
+    this->enc.cache.add_encoding(ex, enc);
 }
 
 void tree_encoder::add_tree_full(expr * ex, expr * const * args, unsigned num) {
@@ -65,8 +64,7 @@ void tree_encoder::add_tree_full(expr * ex, expr * const * args, unsigned num) {
         } else {
             enc->A = m.mk_false();
         }
-        enc->inc_ref();
-        this->enc.encoding[ex] = enc;
+        this->enc.cache.add_encoding(ex, enc);
         return;
     }
 
@@ -104,8 +102,7 @@ void tree_encoder::add_tree_full(expr * ex, expr * const * args, unsigned num) {
     }
 
     enc->A = m.mk_and( andargs.size(), &andargs[0]);
-    enc->inc_ref();
-    this->enc.encoding[ex] = enc;
+    this->enc.cache.add_encoding(ex, enc);
 }
 
 app * tree_encoder::mk_is_successor(expr * x, expr * y) {

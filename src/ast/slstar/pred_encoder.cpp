@@ -205,10 +205,10 @@ app * pred_encoder::mk_bdata(expr * Pcont, expr * Z, func_decl * f,
                 expr* arg = P->get_arg(k);
                 if(enc.util.is_alpha(arg)){
                     app * t = to_app(arg);
-                    pargs.push_back(m.mk_app(enc.get_f_dat(t->get_decl()->get_range()), xlocs[i]));
+                    pargs.push_back(m.mk_app(enc.cache.get_f_dat(t->get_decl()->get_range()), xlocs[i]));
                 } else if(enc.util.is_beta(arg)) {
                     app * t = to_app(arg);
-                    pargs.push_back(m.mk_app(enc.get_f_dat(t->get_decl()->get_range()), xlocs[j]));
+                    pargs.push_back(m.mk_app(enc.cache.get_f_dat(t->get_decl()->get_range()), xlocs[j]));
                 } else {
                     pargs.push_back(arg);
                 }
@@ -234,7 +234,7 @@ app * pred_encoder::mk_udata(expr * Pcont, expr * Z, expr_ref_vector const& xloc
             expr* arg = P->get_arg(k);
             if(enc.util.is_alpha(arg)){
                 app * t = to_app(arg);
-                pargs.push_back(m.mk_app(enc.get_f_dat(t->get_decl()->get_range()), xlocs[i]));
+                pargs.push_back(m.mk_app(enc.cache.get_f_dat(t->get_decl()->get_range()), xlocs[i]));
             } else {
                 pargs.push_back(arg);
             }

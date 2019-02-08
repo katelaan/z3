@@ -10,14 +10,10 @@ const std::string slstar_encoder::xl_prefix = "__xl";
 const std::string slstar_encoder::xt_prefix = "__xt";
 
 slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort) : m(m), m_boolrw(m),
-    set_enc(m, loc_sort),
-    m_loc_sort(loc_sort, m), f_next(m), f_left(m), f_right(m), 
+    set_enc(m, loc_sort), m_loc_sort(loc_sort, m), f_next(m), f_left(m), f_right(m), cache(m, m_loc_sort),
     list_locs(m), tree_locs(m), Xn(m), Xl(m), Xr(m), Xd(m), enc_null(m),
     util(m)
  {
-    SASSERT(encodedlocs.size() == 0);
-    SASSERT(locencoding.size() == 0);
-
     sort * const domain[] = {loc_sort};
     
     f_next = m.mk_fresh_func_decl("f_next", 1, domain, loc_sort);
@@ -26,24 +22,8 @@ slstar_encoder::slstar_encoder(ast_manager & m, sort * loc_sort) : m(m), m_boolr
     enc_null = m.mk_fresh_const("null", m_loc_sort);
 }
 
-func_decl * slstar_encoder::get_f_dat(sort * s){
-    auto i = f_dat_map.emplace(s, nullptr);
+slstar_encoder::~slstar_encoder() {
 
-    if (i.second) {
-        std::string name = s->get_name().bare_str();
-
-        TRACE("slstar_f_dat", 
-            tout <<  "new f_dat from Sort: " << name; 
-        );
-
-        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-        name = "f_dat_" + name;
-
-        sort * const domain[] = {m_loc_sort};
-        i.first->second = m.mk_fresh_func_decl(name.c_str(), 1, domain, s);
-        m.inc_ref(i.first->second);
-    }
-    return i.first->second;
 }
 
 app * slstar_encoder::mk_global_constraints() {
@@ -115,8 +95,9 @@ void slstar_encoder::prepare(sl_bounds bd, sl_enc_level level) {
 
 void slstar_encoder::encode_top(expr * current, expr_ref & new_ex) {
     encode(current);
-    if(encoding.find(current) != encoding.end() ){
-        sl_enc* enc = encoding[current];
+    
+    if (cache.has_cached_encoding(current)){
+        sl_enc* enc = cache.get_cached_encoding(current);
         //expr * const andargs[3] = {enc->A, enc->B, mk_gobal_constraints(current)};
         //expr * const andargs[3] = {m.mk_true(), m.mk_true(), mk_gobal_constraints(current)};
         std::vector<expr*> andargs;
@@ -131,6 +112,8 @@ void slstar_encoder::encode_top(expr * current, expr_ref & new_ex) {
         }
         andargs.push_back(m.mk_eq(enc->Yd, Xd));
         new_ex = m.mk_and(andargs.size(), &andargs[0]);
+
+        std::cout << "Finished top level encoding: " << new_ex << std::endl;
     } else {
         m.raise_exception("Unexpected encoder error: no top level encoding found!");
     }
@@ -138,19 +121,25 @@ void slstar_encoder::encode_top(expr * current, expr_ref & new_ex) {
 
 void slstar_encoder::encode(expr * ex) {
     SASSERT(is_app(ex));
+    std::cout << "Encoding " << mk_ismt2_pp(ex, m) << std::endl;
 
     /* ignore already encoded expressions, but only if encoding level is 
     lower than current encoding level */
-    auto it = encoding.find(ex);
-    if( it != encoding.end() ) {
-        SASSERT(it->second->level != SL_LEVEL_INVALID);
-        if(it->second->level >= current_level) {
+    if(cache.has_cached_encoding(ex)) {
+        sl_enc* cached = cache.get_cached_encoding(ex);
+        SASSERT(cached->level != SL_LEVEL_INVALID);
+        if(cached->level >= current_level) {
+            std::cout << "Encoding of " << mk_ismt2_pp(ex, m) << " already performed for the current level => return" << std::endl;
             return;
         }
+
+        std::cout << "Encoding of " << mk_ismt2_pp(ex, m) << " already performed for previous level => erase outdated encoding" << std::endl;
         // TODOsl remove old encoding
-        encoding.erase(it);
-        delete it->second;
+        cache.uncache(ex);
+        // TODO[REF] Why does the following delete operation segfault now (but not before using references in the sl_enc class)?
+        //delete ex;
     }
+
     app * t = to_app(ex);
     unsigned num = t->get_num_args();
     for(unsigned i=0; i<num; i++){
@@ -207,37 +196,12 @@ void slstar_encoder::encode(expr * ex) {
     }
 }
 
-void slstar_encoder::clear_enc_dict() {
-    for(auto it=encoding.begin(); it!=encoding.end(); it++) {
-        sl_enc* enc = it->second;
-        delete enc;
-    }
-    encoding.clear();
-}
-
-void slstar_encoder::clear_loc_vars(){
-    for(auto it=locencoding.begin(); it!=locencoding.end(); ++it){
-        m.dec_ref(it->second);
-    }
-}
-
-slstar_encoder::~slstar_encoder() {
-    for(auto i = f_dat_map.begin(); i!=f_dat_map.end(); ++i) {
-        m.dec_ref(i->second);
-    }
-
-    clear_enc_dict();
-    clear_loc_vars();
-}
-
 app * slstar_encoder::mk_encoded_loc(expr * x) {
 #if defined(Z3DEBUG)
-    SASSERT( encodedlocs.find(x)==encodedlocs.end() );
+    SASSERT(!cache.has_encoded_loc(x));
 #endif
-    auto it = locencoding.find(x);
-    if(it != locencoding.end()){
-        app * ret = it->second;
-        return ret;
+    if (cache.has_encoded_loc(x)) {
+        return cache.get_encoded_loc(x);
     }
     // ensure all nulls are the same location
     if(util.is_null(x) ) {
@@ -248,12 +212,8 @@ app * slstar_encoder::mk_encoded_loc(expr * x) {
     app* xt = to_app(x);
     func_decl * fdec =xt->get_decl();
     app * fresh = m.mk_fresh_const(fdec->get_name().bare_str(), m_loc_sort);
-    encoded_const.emplace(fresh);
-    locencoding.emplace(x,fresh);
-#if defined(Z3DEBUG)
-    encodedlocs.emplace(fresh); //TODOsl delete
-#endif
-    m.inc_ref(fresh);
+
+    cache.add_encoded_loc(x, fresh);
     return fresh;
 }
 
@@ -280,7 +240,7 @@ void slstar_encoder::add_floc_fdat(expr * ex, expr * const * args, unsigned num)
         func_decl * decl = t->get_decl();
         std::vector<expr*> newargs;
         for(unsigned i=0; i<num; i++){
-            newargs.push_back(encoding[args[i]]->A);
+            newargs.push_back(cache.get_cached_encoding(args[i])->A);
         }
         enc->A = m.mk_app(decl, num, &newargs[0]);
     } else {
@@ -288,19 +248,16 @@ void slstar_encoder::add_floc_fdat(expr * ex, expr * const * args, unsigned num)
     }
     enc->is_rewritten = needs_rewrite;
 
-    enc->inc_ref();
     enc->level = SL_LEVEL_FULL;
-    encoding[ex] = enc;
+    cache.add_encoding(ex, enc);
 }
 
 
 void slstar_encoder::add_const(expr * ex) {
     sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     enc->is_spatial = false;
-
-    enc->inc_ref();
     enc->level = SL_LEVEL_FULL;
-    encoding[ex] = enc;
+    cache.add_encoding(ex, enc);
 }
 
 
@@ -325,9 +282,8 @@ void slstar_encoder::add_pton(expr * ex, expr * const * args, unsigned num) {
     andargs.push_back(set_enc.mk_is_empty(enc->Yd));
     enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
-    enc->inc_ref();
     enc->level = SL_LEVEL_FULL;
-    encoding[ex] = enc;
+    cache.add_encoding(ex, enc);
 }
 
 void slstar_encoder::add_ptol(expr * ex, expr * const * args, unsigned num) {
@@ -352,9 +308,8 @@ void slstar_encoder::add_ptol(expr * ex, expr * const * args, unsigned num) {
 
     enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
-    enc->inc_ref();
     enc->level = SL_LEVEL_FULL;
-    encoding[ex] = enc;
+    cache.add_encoding(ex, enc);
 }
 
 void slstar_encoder::add_ptor(expr * ex, expr * const * args, unsigned num) {
@@ -379,9 +334,8 @@ void slstar_encoder::add_ptor(expr * ex, expr * const * args, unsigned num) {
 
     enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
-    enc->inc_ref();
     enc->level = SL_LEVEL_FULL;
-    encoding[ex] = enc;
+    cache.add_encoding(ex, enc);
 }
 
 void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
@@ -407,7 +361,7 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
-    func_decl * f_dat = get_f_dat(data_sort);
+    func_decl * f_dat = cache.get_f_dat(data_sort);
 
     expr* f_dat_x = m.mk_app(f_dat,x);
     enc->A = m.mk_and(m.mk_eq(f_dat_x,y), m.mk_not(m.mk_eq(x, enc_null )));
@@ -424,9 +378,8 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
 
     enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
-    enc->inc_ref();
     enc->level = SL_LEVEL_FULL;
-    encoding[ex] = enc;
+    cache.add_encoding(ex, enc);
 }
 
 void slstar_encoder::add_ptolr(expr * ex, expr * const * args, unsigned num) {
@@ -453,9 +406,8 @@ void slstar_encoder::add_ptolr(expr * ex, expr * const * args, unsigned num) {
 
     enc->B = m.mk_and(andargs.size(), &andargs[0]);
 
-    enc->inc_ref();
     enc->level = SL_LEVEL_FULL;
-    encoding[ex] = enc;
+    cache.add_encoding(ex, enc);
 }
 
 void slstar_encoder::add_sep(expr * ex, expr * const * args, unsigned num) {
@@ -471,35 +423,38 @@ void slstar_encoder::add_sep(expr * ex, expr * const * args, unsigned num) {
     vector<expr*> Yd;
     // A resp. B is conj. over all As and Bs
     for(unsigned i=0; i<num; i++) {
-        SASSERT(encoding.find(args[i]) != encoding.end());
-        if(encoding[args[i]]->is_spatial && m.is_not(args[i])) {
+        SASSERT(cache.has_cached_encoding(args[i]));
+        if (cache.get_cached_encoding(args[i])->is_spatial && m.is_not(args[i])) {
             m.raise_exception("Spatial atoms must not be negated!");
         }
-        if(!util.is_call(args[i]) && !util.is_pto(args[i]) && !util.is_sep(args[i]) && encoding[args[i]]->is_spatial ){
+        if (!util.is_call(args[i]) && !util.is_pto(args[i]) && !util.is_sep(args[i]) && cache.get_cached_encoding(args[i])->is_spatial ){
             m.raise_exception("Invalid spatial atom!");
         }
-        andargsA.push_back(encoding[args[i]]->A);
-        andargsB.push_back(encoding[args[i]]->B);
+        auto cached = cache.get_cached_encoding(args[i]);
+        andargsA.push_back(cached->A);
+        andargsB.push_back(cached->B);
         if(needs_list_footprint){
-            Yn.push_back(encoding[args[i]]->Yn);
+            Yn.push_back(cached->Yn);
         }
         if(needs_tree_footprint){
-            Yl.push_back(encoding[args[i]]->Yl);
-            Yr.push_back(encoding[args[i]]->Yr);
+            Yl.push_back(cached->Yl);
+            Yr.push_back(cached->Yr);
         }
-        Yd.push_back(encoding[args[i]]->Yd);
+        Yd.push_back(cached->Yd);
     }
     // add A: pairwise check of separation of Ys
     for(unsigned i=0; i<num; i++) {
+        auto cached_i = cache.get_cached_encoding(args[i]);
         for(unsigned j=i+1; j<num; j++){
-            if(needs_list_footprint){
-                andargsA.push_back(set_enc.mk_is_empty(set_enc.mk_intersect(encoding[args[i]]->Yn, encoding[args[j]]->Yn)));
+            auto cached_j = cache.get_cached_encoding(args[j]);
+            if (needs_list_footprint){
+                andargsA.push_back(set_enc.mk_is_empty(set_enc.mk_intersect(cached_i->Yn, cached_j->Yn)));
             }
-            if(needs_tree_footprint){
-                andargsA.push_back(set_enc.mk_is_empty(set_enc.mk_intersect(encoding[args[i]]->Yl, encoding[args[j]]->Yl)));
-                andargsA.push_back(set_enc.mk_is_empty(set_enc.mk_intersect(encoding[args[i]]->Yr, encoding[args[j]]->Yr)));
+            if (needs_tree_footprint){
+                andargsA.push_back(set_enc.mk_is_empty(set_enc.mk_intersect(cached_i->Yl, cached_j->Yl)));
+                andargsA.push_back(set_enc.mk_is_empty(set_enc.mk_intersect(cached_i->Yr, cached_j->Yr)));
             }
-            andargsA.push_back(set_enc.mk_is_empty(set_enc.mk_intersect(encoding[args[i]]->Yd, encoding[args[j]]->Yd)));
+            andargsA.push_back(set_enc.mk_is_empty(set_enc.mk_intersect(cached_i->Yd, cached_j->Yd)));
         }
     }
     // add B: current Y is equal to union of all Ys
@@ -515,22 +470,21 @@ void slstar_encoder::add_sep(expr * ex, expr * const * args, unsigned num) {
     enc->A = m.mk_and(andargsA.size(), &andargsA[0]);
     enc->B = m.mk_and(andargsB.size(), &andargsB[0]);
 
-    enc->inc_ref();
     enc->level = get_lowest_level(args,num);
-    encoding[ex] = enc;
+    cache.add_encoding(ex, enc);
 }
 void slstar_encoder::add_not(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==1);
-    SASSERT(encoding.find(args[0]) != encoding.end());
+    SASSERT(cache.has_cached_encoding(args[0]));
 
     sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
-    enc->is_spatial = encoding[args[0]]->is_spatial;
-    enc->A = m.mk_not( encoding[args[0]]->A );
-    enc->B = encoding[args[0]]->B;
-    enc->copy_Y(encoding[args[0]]);
-    enc->inc_ref();
-    enc->level = encoding[args[0]]->level;
-    encoding[ex] = enc;
+    auto cached = cache.get_cached_encoding(args[0]);
+    enc->is_spatial = cached->is_spatial;
+    enc->A = m.mk_not( cached->A );
+    enc->B = cached->B;
+    enc->copy_Y(cached);
+    enc->level = cached->level;
+    cache.add_encoding(ex, enc);
 }
 
 void slstar_encoder::add_eq(expr * ex, expr * const * args, unsigned num) {
@@ -541,11 +495,10 @@ void slstar_encoder::add_eq(expr * ex, expr * const * args, unsigned num) {
         for(unsigned i=0; i<num; i++) {
             eqargs.push_back(mk_encoded_loc(args[i]));
         }
-        m.dec_ref(encoding[ex]->A);
-        encoding[ex]->A = m.mk_app(m.get_basic_family_id(), OP_EQ, num, &eqargs[0]);
-        m.inc_ref(encoding[ex]->A);
-        encoding[ex]->level = SL_LEVEL_FULL;
-        encoding[ex]->is_rewritten = true;
+        auto cached = cache.get_cached_encoding(ex);
+        cached->A = m.mk_app(m.get_basic_family_id(), OP_EQ, num, &eqargs[0]);
+        cached->level = SL_LEVEL_FULL;
+        cached->is_rewritten = true;
     }
 }
 
@@ -557,11 +510,10 @@ void slstar_encoder::add_distinct(expr * ex, expr * const * args, unsigned num) 
         for(unsigned i=0; i<num; i++) {
             distargs.push_back(mk_encoded_loc(args[i]));
         }
-        m.dec_ref(encoding[ex]->A);
-        encoding[ex]->A = m.mk_distinct(num, &distargs[0]);
-        m.inc_ref(encoding[ex]->A);
-        encoding[ex]->level = SL_LEVEL_FULL;
-        encoding[ex]->is_rewritten = true;
+        auto cached = cache.get_cached_encoding(ex);
+        cached->A = m.mk_distinct(num, &distargs[0]);
+        cached->level = SL_LEVEL_FULL;
+        cached->is_rewritten = true;
     }
 }
 
@@ -570,20 +522,20 @@ void slstar_encoder::add_and(expr * ex, expr * const * args, unsigned num) {
     if(is_spatial) {
         sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
         enc->is_spatial = is_spatial;
-        enc->copy_Y(encoding[args[0]]);
+        enc->copy_Y(cache.get_cached_encoding(args[0]));
 
         vector<expr*> andargsA;
         vector<expr*> andargsB;
         for(unsigned i=0; i<num; i++) {
-            andargsA.push_back(encoding[args[i]]->A);
-            andargsB.push_back(encoding[args[i]]->B);
+            auto cached_i = cache.get_cached_encoding(args[i]);
+            andargsA.push_back(cached_i->A);
+            andargsB.push_back(cached_i->B);
         }
         enc->A = m.mk_and(andargsA.size(), &andargsA[0]);
         enc->B = m.mk_and(andargsB.size(), &andargsB[0]);
 
-        enc->inc_ref();
         enc->level = get_lowest_level(args, num);
-        encoding[ex] = enc;
+        cache.add_encoding(ex, enc);
     } else {
         add_floc_fdat(ex,args,num);
     }
@@ -593,20 +545,19 @@ void slstar_encoder::add_or(expr * ex, expr * const * args, unsigned num) {
     if(is_spatial) {
         sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
         enc->is_spatial = is_spatial;
-        enc->copy_Y(encoding[args[0]]);
+        enc->copy_Y(cache.get_cached_encoding(args[0]));
 
         vector<expr*> orargsA;
         vector<expr*> andargsB;
         for(unsigned i=0; i<num; i++) {
-            orargsA.push_back(encoding[args[i]]->A);
-            andargsB.push_back(encoding[args[i]]->B);
+            orargsA.push_back(cache.get_cached_encoding(args[i])->A);
+            andargsB.push_back(cache.get_cached_encoding(args[i])->B);
         }
         enc->A = m.mk_or(orargsA.size(), &orargsA[0]);
         enc->B = m.mk_and(andargsB.size(), &andargsB[0]);
 
-        enc->inc_ref();
         enc->level = get_lowest_level(args, num);
-        encoding[ex] = enc;
+        cache.add_encoding(ex, enc);
     } else {
         add_floc_fdat(ex,args,num);
     }
@@ -614,8 +565,8 @@ void slstar_encoder::add_or(expr * ex, expr * const * args, unsigned num) {
 
 bool slstar_encoder::is_any_spatial(expr * const * args, unsigned num) {
     for(unsigned i=0; i<num; i++) {
-        SASSERT(encoding.find(args[i]) != encoding.end());
-        if(encoding[args[i]]->is_spatial) {
+        SASSERT(cache.has_cached_encoding(args[i]));
+        if (cache.get_cached_encoding(args[i])->is_spatial) {
             return true;
         }
     }
@@ -625,8 +576,8 @@ bool slstar_encoder::is_any_spatial(expr * const * args, unsigned num) {
 
 bool slstar_encoder::is_any_rewritten(expr * const * args, unsigned num) {
     for(unsigned i=0; i<num; i++) {
-        SASSERT(encoding.find(args[i]) != encoding.end());
-        if(encoding[args[i]]->is_rewritten) {
+        SASSERT(cache.has_cached_encoding(args[i]));
+        if (cache.get_cached_encoding(args[i])->is_rewritten) {
             return true;
         }
     }
@@ -636,9 +587,9 @@ bool slstar_encoder::is_any_rewritten(expr * const * args, unsigned num) {
 sl_enc_level slstar_encoder::get_lowest_level(expr * const * args, unsigned num) {
     sl_enc_level ret = SL_LEVEL_FULL;
     for(unsigned i=0; i<num; i++) {
-        SASSERT(encoding.find(args[i]) != encoding.end());
-        if(encoding[args[i]]->level < ret) {
-            ret = encoding[args[i]]->level;
+        SASSERT(cache.has_cached_encoding(args[i]));
+        if(cache.get_cached_encoding(args[i])->level < ret) {
+            ret = cache.get_cached_encoding(args[i])->level;
         }
     }
     return ret;
@@ -730,10 +681,6 @@ app * slstar_set_encoder::mk_intersect(expr * lhs, expr * rhs) {
  */
 
 void sl_enc::mk_fresh_Y() {
-    if(Yn) m.dec_ref(Yn);
-    if(Yl) m.dec_ref(Yl);
-    if(Yr) m.dec_ref(Yr);
-    if(Yd) m.dec_ref(Yd);
     if(needs_list_footprint) {
         Yn = set_enc.mk_fresh_array( (slstar_encoder::Y_prefix + "n").c_str() );
     }
@@ -751,13 +698,9 @@ void sl_enc::copy_Y(sl_enc * other) {
     Yd = other->Yd;
 }
 
-sl_enc::sl_enc(ast_manager & _m, slstar_set_encoder & set_enc, bool trees, bool lists) : m(_m), set_enc(set_enc){
-    Yn = nullptr;
-    Yl = nullptr;
-    Yr = nullptr;
-    Yd = nullptr;
-    A = nullptr;
-    B = nullptr;
+sl_enc::sl_enc(ast_manager & _m, slstar_set_encoder & set_enc, bool trees, bool lists) :
+    A(m), B(m), Yn(m), Yl(m), Yr(m), Yd(m), m(_m), set_enc(set_enc)
+ {
     is_spatial = false;
     is_rewritten = false;
     needs_tree_footprint = trees;
@@ -765,20 +708,103 @@ sl_enc::sl_enc(ast_manager & _m, slstar_set_encoder & set_enc, bool trees, bool 
 }
 
 sl_enc::~sl_enc() {
-    if(Yn) m.dec_ref(Yn);
-    if(Yl) m.dec_ref(Yl);
-    if(Yr) m.dec_ref(Yr);
-    if(Yd) m.dec_ref(Yd);
-    if(A) m.dec_ref(A);
-    if(B) m.dec_ref(B);
+    std::cout << "Will delete sl_enc with: " << std::endl;
+    std::cout << A << std::endl;
+    std::cout << B << std::endl;
+    std::cout << "FPs: " << Yn << ", " << Yl << ", " << Yr << ", " << Yd << std::endl;
+}
+
+/**
+ * 
+ */
+
+enc_cache::enc_cache(ast_manager & m, sort_ref const& loc_sort): m(m), m_loc_sort(loc_sort) {
 
 }
 
-void sl_enc::inc_ref() {
-    if(Yn) m.inc_ref(Yn);
-    if(Yl) m.inc_ref(Yl);
-    if(Yr) m.inc_ref(Yr);
-    if(Yd) m.inc_ref(Yd);
-    if(A) m.inc_ref(A);
-    if(B) m.inc_ref(B);
+void enc_cache::clear_enc_dict() {
+    for(auto it=encoding.begin(); it!=encoding.end(); it++) {
+        sl_enc* enc = it->second;
+        delete enc;
+    }
+    encoding.clear();
+}
+
+void enc_cache::clear_loc_vars(){
+    for(auto it=locencoding.begin(); it!=locencoding.end(); ++it){
+        m.dec_ref(it->second);
+    }
+}
+
+enc_cache::~enc_cache() {
+    for(auto i = f_dat_map.begin(); i!=f_dat_map.end(); ++i) {
+        m.dec_ref(i->second);
+    }
+
+    clear_enc_dict();
+    clear_loc_vars();
+}
+
+func_decl * enc_cache::get_f_dat(sort * s) {
+    auto i = f_dat_map.emplace(s, nullptr);
+
+    if (i.second) {
+        std::string name = s->get_name().bare_str();
+
+        TRACE("slstar_f_dat", 
+            tout <<  "new f_dat from Sort: " << name; 
+        );
+
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+        name = "f_dat_" + name;
+
+        sort * const domain[] = {m_loc_sort};
+        i.first->second = m.mk_fresh_func_decl(name.c_str(), 1, domain, s);
+        m.inc_ref(i.first->second);
+    }
+    return i.first->second;
+}
+
+bool enc_cache::has_cached_encoding(expr * e) const {
+    return encoding.find(e) != encoding.end();
+}
+
+sl_enc* enc_cache::get_cached_encoding(expr * e) const {
+    SASSERT(has_cached_encoding(e));
+    return encoding.at(e);
+}
+
+bool enc_cache::has_encoded_loc(expr * e) const {
+    return locencoding.find(e) != locencoding.end();
+}
+
+app* enc_cache::get_encoded_loc(expr * e) const {
+    SASSERT(has_encoded_loc(e));
+    return locencoding.at(e);
+}
+
+void enc_cache::add_encoded_loc(expr * e, app * encoded) {
+    encoded_const.emplace(encoded);
+    locencoding.emplace(e, encoded);
+#if defined(Z3DEBUG)
+    encodedlocs.emplace(encoded); //TODOsl delete
+#endif
+    m.inc_ref(encoded);
+}
+
+void enc_cache::add_encoding(expr * e, sl_enc* enc) {
+    // TODO: Perhaps assert that there isn't already something in the cache?
+    encoding[e] = enc;
+}
+
+void enc_cache::uncache(expr *const e) {
+    encoding.erase(e);
+}
+
+std::unordered_set<app*> enc_cache::all_encoded_consts() const {
+    return encoded_const;
+}
+
+std::unordered_map<sort*, func_decl*> enc_cache::get_f_dat_map() const {
+    return f_dat_map;
 }

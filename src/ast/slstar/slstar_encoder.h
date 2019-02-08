@@ -68,31 +68,56 @@ public:
     app * mk_intersect(expr * lhs, expr * rhs);
 };
 
+class enc_cache {
+public:
+    enc_cache(ast_manager & m, sort_ref const& loc_sort);
+    ~enc_cache();
+
+    func_decl * get_f_dat(sort * s);
+    bool has_cached_encoding(expr * e) const;
+    sl_enc* get_cached_encoding(expr * e) const;
+    void add_encoding(expr * e, sl_enc* enc);
+    bool has_encoded_loc(expr * e) const;
+    app* get_encoded_loc(expr * e) const;
+    void add_encoded_loc(expr * e, app * encoded);
+    void uncache(expr *const e);
+    void clear_enc_dict();
+    std::unordered_set<app*> all_encoded_consts() const;
+    std::unordered_map<sort*, func_decl*> get_f_dat_map() const;
+private:
+    ast_manager & m; 
+    sort_ref const& m_loc_sort;
+
+    #if defined(Z3DEBUG)
+    std::unordered_set<expr*>          encodedlocs;
+    #endif  
+    std::unordered_map<sort*, func_decl*> f_dat_map;
+    std::unordered_map<expr*,sl_enc*>   encoding;
+    std::unordered_map<expr*,app*>     locencoding;
+    std::unordered_set<app*>           encoded_const;
+
+    void clear_loc_vars();
+};
+
 class slstar_encoder {
     friend class pred_encoder;
     friend class list_encoder;
     friend class tree_encoder;
     friend class slstar_model_converter;
+    friend class slstar_tactic; // TODO: Remove this from friends as soon as we have a proper way to clean the cache from outside; see the reduce tactic file
 protected:
     ast_manager            & m;
     bool_rewriter            m_boolrw;
     sl_bounds                bounds;
     slstar_set_encoder       set_enc;
-
+    
     sort_ref m_loc_sort;
-
     func_decl_ref f_next;
     func_decl_ref f_left;
     func_decl_ref f_right;
-    
-    std::unordered_map<sort*, func_decl*> f_dat_map;
 
-    std::unordered_map<expr*,sl_enc*>  encoding;
-    std::unordered_map<expr*,app*>     locencoding;
-    std::unordered_set<app*>           encoded_const;
-#if defined(Z3DEBUG)
-    std::unordered_set<expr*>          encodedlocs;
-#endif
+    enc_cache                cache;
+
     expr_ref_vector list_locs;
     expr_ref_vector tree_locs;
 
@@ -122,8 +147,6 @@ public:
     app * mk_encoded_loc(expr * ex);
     app * mk_global_constraints();
 
-    void clear_enc_dict();
-    void clear_loc_vars();
     void clear_X_vector();
 
     void prepare(sl_bounds bd, sl_enc_level level);
@@ -149,18 +172,17 @@ private:
     bool is_any_spatial(expr * const * args, unsigned num);
     bool is_any_rewritten(expr * const * args, unsigned num);
     sl_enc_level get_lowest_level(expr * const * args, unsigned num);
-    func_decl * get_f_dat(sort * sort);
 };
 
 
-class sl_enc{
+class sl_enc {
 public:
-    expr * A;
-    expr * B;
-    expr * Yn;
-    expr * Yl;
-    expr * Yr;
-    expr * Yd;
+    expr_ref A;
+    expr_ref B;
+    expr_ref Yn;
+    expr_ref Yl;
+    expr_ref Yr;
+    expr_ref Yd;
     bool is_spatial;
     bool is_rewritten;
     bool needs_tree_footprint;
@@ -169,17 +191,11 @@ public:
 
     sl_enc(ast_manager & m, slstar_set_encoder & set_enc, bool trees, bool lists );
     ~sl_enc();
-private:
-
-    ast_manager & m;
-    slstar_set_encoder & set_enc;
     void mk_fresh_Y();
     void copy_Y(sl_enc * other);
-    void inc_ref();
-    void dec_ref();
-    friend class slstar_encoder;
-    friend class list_encoder;
-    friend class tree_encoder;
+private:
+    ast_manager & m;
+    slstar_set_encoder & set_enc;
 };
 
 #endif //SLSTAR_ENCODER_H_ 

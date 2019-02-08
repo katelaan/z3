@@ -19,7 +19,7 @@ struct hash<symbol> {
 slstar_model_converter::slstar_model_converter(ast_manager & m, slstar_encoder & enc):
     m(m),
     m_arrayutil(m),
-    loc_constants(enc.encoded_const),
+    loc_constants(enc.cache.all_encoded_consts()),
     list_locs(enc.list_locs),
     tree_locs(enc.tree_locs)
 {
@@ -44,7 +44,7 @@ slstar_model_converter::slstar_model_converter(ast_manager & m, slstar_encoder &
     f_next_name = enc.f_next->get_name().bare_str();
     f_left_name = enc.f_left->get_name().bare_str();
     f_right_name = enc.f_right->get_name().bare_str();
-    for(auto it=enc.f_dat_map.begin(); it!=enc.f_dat_map.end(); ++it ) {
+    for(auto it=enc.cache.get_f_dat_map().begin(); it!=enc.cache.get_f_dat_map().end(); ++it ) {
         std::string f_dat_name = it->second->get_name().bare_str();
         f_dat_names.emplace(f_dat_name);
     }

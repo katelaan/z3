@@ -144,7 +144,8 @@ class slstar_tactic : public tactic {
                         result.append(tmp_result);
 
                         tmp_result.reset();
-                        encoder.clear_enc_dict();
+                        // TODO: This should be achieved via a higher-level API that deals with levels
+                        encoder.cache.clear_enc_dict();
                         release_eq_symbols();
                         return;
                     }
@@ -153,7 +154,8 @@ class slstar_tactic : public tactic {
                 }
             }
 
-            encoder.clear_enc_dict();
+            // TODO: This should be achieved via a higher-level API that deals with levels
+            encoder.cache.clear_enc_dict();
             release_eq_symbols();
 
             SASSERT(g->is_well_sorted());
