@@ -68,6 +68,30 @@ public:
     app * mk_intersect(expr * lhs, expr * rhs);
 };
 
+class sl_enc {
+public:
+    expr_ref A;
+    expr_ref B;
+    expr_ref Yn;
+    expr_ref Yl;
+    expr_ref Yr;
+    expr_ref Yd;
+    bool is_spatial;
+    bool is_rewritten;
+    bool needs_tree_footprint;
+    bool needs_list_footprint;
+    sl_enc_level level;
+
+    sl_enc(ast_manager & m, slstar_set_encoder & set_enc, bool trees, bool lists );
+    ~sl_enc();
+    void mk_fresh_Y();
+    void copy_Y(sl_enc* other);
+    void pp(std::ostream & out);
+private:
+    ast_manager & m;
+    slstar_set_encoder & set_enc;
+};
+
 class enc_cache {
 public:
     enc_cache(ast_manager & m, sort_ref const& loc_sort);
@@ -76,7 +100,7 @@ public:
     func_decl * get_f_dat(sort * s);
     bool has_cached_encoding(expr * e) const;
     sl_enc* get_cached_encoding(expr * e) const;
-    void add_encoding(expr * e, sl_enc* enc);
+    void add_encoding(expr * e, sl_enc * enc);
     bool has_encoded_loc(expr * e) const;
     app* get_encoded_loc(expr * e) const;
     void add_encoded_loc(expr * e, app * encoded);
@@ -92,9 +116,9 @@ private:
     std::unordered_set<expr*>          encodedlocs;
     #endif  
     std::unordered_map<sort*, func_decl*> f_dat_map;
-    std::unordered_map<expr*,sl_enc*>   encoding;
-    std::unordered_map<expr*,app*>     locencoding;
-    std::unordered_set<app*>           encoded_const;
+    std::unordered_map<expr*, sl_enc*> encoding;
+    std::unordered_map<expr*, app*> locencoding;
+    std::unordered_set<app*> encoded_const;
 
     void clear_loc_vars();
 };
@@ -172,30 +196,6 @@ private:
     bool is_any_spatial(expr * const * args, unsigned num);
     bool is_any_rewritten(expr * const * args, unsigned num);
     sl_enc_level get_lowest_level(expr * const * args, unsigned num);
-};
-
-
-class sl_enc {
-public:
-    expr_ref A;
-    expr_ref B;
-    expr_ref Yn;
-    expr_ref Yl;
-    expr_ref Yr;
-    expr_ref Yd;
-    bool is_spatial;
-    bool is_rewritten;
-    bool needs_tree_footprint;
-    bool needs_list_footprint;
-    sl_enc_level level;
-
-    sl_enc(ast_manager & m, slstar_set_encoder & set_enc, bool trees, bool lists );
-    ~sl_enc();
-    void mk_fresh_Y();
-    void copy_Y(sl_enc * other);
-private:
-    ast_manager & m;
-    slstar_set_encoder & set_enc;
 };
 
 #endif //SLSTAR_ENCODER_H_ 

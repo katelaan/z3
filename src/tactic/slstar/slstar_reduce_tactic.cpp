@@ -121,14 +121,13 @@ class slstar_tactic : public tactic {
                 return;
             }
 
-            slstar_encoder    encoder(m, loc_sort );           
+            slstar_encoder encoder(m, loc_sort);           
 
             static const sl_enc_level levels[] = {SL_LEVEL_UF, SL_LEVEL_FULL};
 
             for (unsigned i = 0; i<sizeof(levels)/sizeof(sl_enc_level); i++) {                
                 encoder.prepare(bd, levels[i]);
                 perform_encoding(encoder, g, result, bd.contains_calls);
-
                 
                 if (levels[i] != SL_LEVEL_FULL) {
                     goal_ref_buffer tmp_result;
@@ -140,6 +139,8 @@ class slstar_tactic : public tactic {
                     SASSERT(tmp_result.size() == 1);
 
                     if(tmp_result[0]->is_decided_unsat()) {
+                        std::cout << "Level " << levels[i] << " showed unsatisfiability => Return" << std::endl;
+
                         result.reset();
                         result.append(tmp_result);
 
@@ -148,15 +149,21 @@ class slstar_tactic : public tactic {
                         encoder.cache.clear_enc_dict();
                         release_eq_symbols();
                         return;
+                    } else {
+                        std::cout << "Level " << levels[i] << " could not show unsatisfiability => Go to next level" << std::endl;
                     }
                     tmp_result.reset();
                     result.reset();
                 }
             }
 
+            std::cout << "Finished encoding => Clean up caches" << std::endl;
+
             // TODO: This should be achieved via a higher-level API that deals with levels
-            encoder.cache.clear_enc_dict();
+            //encoder.cache.clear_enc_dict();
             release_eq_symbols();
+
+            std::cout << "Finished clean up" << std::endl;
 
             SASSERT(g->is_well_sorted());
 
@@ -165,6 +172,8 @@ class slstar_tactic : public tactic {
                 TRACE("slstar", tout << "AFTER: " << std::endl; result[0]->display(tout);
                             if (mc) mc->display(tout); tout << std::endl; );
             }
+
+            std::cout << "Encoder will go out of scope now" << std::endl;
         }
     };
 

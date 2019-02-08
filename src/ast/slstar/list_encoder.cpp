@@ -17,7 +17,7 @@ void list_encoder::add_list(expr * ex, expr * const * args, unsigned num, sl_enc
 
 void list_encoder::add_list_uf(expr * ex, expr * const * args, unsigned num) {
     SASSERT(is_app(ex));
-    sl_enc * enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
+    sl_enc* enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -30,7 +30,7 @@ void list_encoder::add_list_uf(expr * ex, expr * const * args, unsigned num) {
 
 void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
     SASSERT(is_app(ex));
-    sl_enc * enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
+    sl_enc* enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
     enc->level = SL_LEVEL_FULL;
@@ -56,7 +56,7 @@ void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
     }
 
     if (this->enc.bounds.n_list == 0) {
-        enc->B = mk_defineY(enc,nullptr);
+        enc->B = mk_defineY(enc, nullptr);
         /* data predicates are trivally true, since we got an empty list */
         if(stops.size() == 0){
             enc->A = m.mk_eq(xenc, this->enc.enc_null);
@@ -109,7 +109,7 @@ app * list_encoder::mk_is_successor(expr * x, expr * y) {
     return m.mk_eq(f_next_x,y);
 }
 
-app * list_encoder::mk_defineY(sl_enc * e, expr * Z) {
+app * list_encoder::mk_defineY(sl_enc* e, expr * Z) {
     std::vector<expr*> andargs;
     if(Z!=nullptr){
         andargs.push_back(m.mk_eq(e->Yd, Z));

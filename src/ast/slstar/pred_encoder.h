@@ -28,7 +28,7 @@ public:
 
     app * mk_isstop(expr * xenc, std::vector<expr*> & stops);
     virtual app * mk_is_successor(expr * x, expr * y) = 0;
-    virtual app * mk_defineY(sl_enc * enc, expr * Z) = 0;
+    virtual app * mk_defineY(sl_enc* e, expr * Z) = 0;
     app * mk_reach1(expr * Z, 
         std::vector<func_decl*> & prev_reach, 
         expr_ref_vector const& xlocs, 

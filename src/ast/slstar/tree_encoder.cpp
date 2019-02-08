@@ -17,7 +17,7 @@ void tree_encoder::add_tree(expr * ex, expr * const * args, unsigned num, sl_enc
 
 void tree_encoder::add_tree_uf(expr * ex, expr * const * args, unsigned num) {
     SASSERT(is_app(ex));
-    sl_enc * enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
+    sl_enc* enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -30,7 +30,7 @@ void tree_encoder::add_tree_uf(expr * ex, expr * const * args, unsigned num) {
 
 void tree_encoder::add_tree_full(expr * ex, expr * const * args, unsigned num) {
     SASSERT(is_app(ex));
-    sl_enc * enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
+    sl_enc* enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
     enc->level = SL_LEVEL_FULL;
@@ -130,7 +130,7 @@ app * tree_encoder::mk_ordered(expr * Z,
     return m.mk_and(andargs.size(), &andargs[0]);
 }
 
-app * tree_encoder::mk_defineY(sl_enc * e, expr * Z) {
+app * tree_encoder::mk_defineY(sl_enc* e, expr * Z) {
     std::vector<expr*> andargs;
     if(Z!=nullptr){
         andargs.push_back(m.mk_eq(e->Yd, Z));

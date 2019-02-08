@@ -61,6 +61,7 @@ app * slstar_encoder::mk_global_constraints() {
 }
 
 void slstar_encoder::prepare(sl_bounds bd, sl_enc_level level) {
+    std::cout << "Preparing for level " << level << std::endl;
     bounds = bd;
     current_level = level;
 
@@ -135,7 +136,7 @@ void slstar_encoder::encode(expr * ex) {
 
         std::cout << "Encoding of " << mk_ismt2_pp(ex, m) << " already performed for previous level => erase outdated encoding" << std::endl;
         // TODOsl remove old encoding
-        cache.uncache(ex);
+        //cache.uncache(ex);
         // TODO[REF] Why does the following delete operation segfault now (but not before using references in the sl_enc class)?
         //delete ex;
     }
@@ -218,7 +219,7 @@ app * slstar_encoder::mk_encoded_loc(expr * x) {
 }
 
 void slstar_encoder::add_floc_fdat(expr * ex, expr * const * args, unsigned num) {
-    sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+    sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     enc->is_spatial = false;
     
     enc->mk_fresh_Y();
@@ -254,7 +255,7 @@ void slstar_encoder::add_floc_fdat(expr * ex, expr * const * args, unsigned num)
 
 
 void slstar_encoder::add_const(expr * ex) {
-    sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+    sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     enc->is_spatial = false;
     enc->level = SL_LEVEL_FULL;
     cache.add_encoding(ex, enc);
@@ -263,7 +264,7 @@ void slstar_encoder::add_const(expr * ex) {
 
 void slstar_encoder::add_pton(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==2);
-    sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+    sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -288,7 +289,7 @@ void slstar_encoder::add_pton(expr * ex, expr * const * args, unsigned num) {
 
 void slstar_encoder::add_ptol(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==2);
-    sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+    sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -314,7 +315,7 @@ void slstar_encoder::add_ptol(expr * ex, expr * const * args, unsigned num) {
 
 void slstar_encoder::add_ptor(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==2);
-    sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+    sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -357,7 +358,7 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
         m.raise_exception("ptod location points to wrong datasort!");
     }
 
-    sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+    sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -384,7 +385,7 @@ void slstar_encoder::add_ptod(expr * ex, expr * const * args, unsigned num) {
 
 void slstar_encoder::add_ptolr(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==3);
-    sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+    sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -411,7 +412,7 @@ void slstar_encoder::add_ptolr(expr * ex, expr * const * args, unsigned num) {
 }
 
 void slstar_encoder::add_sep(expr * ex, expr * const * args, unsigned num) {
-    sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+    sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -477,7 +478,7 @@ void slstar_encoder::add_not(expr * ex, expr * const * args, unsigned num) {
     SASSERT(num==1);
     SASSERT(cache.has_cached_encoding(args[0]));
 
-    sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+    sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
     auto cached = cache.get_cached_encoding(args[0]);
     enc->is_spatial = cached->is_spatial;
     enc->A = m.mk_not( cached->A );
@@ -520,7 +521,7 @@ void slstar_encoder::add_distinct(expr * ex, expr * const * args, unsigned num) 
 void slstar_encoder::add_and(expr * ex, expr * const * args, unsigned num) {
     bool is_spatial = is_any_spatial(args,num);
     if(is_spatial) {
-        sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+        sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
         enc->is_spatial = is_spatial;
         enc->copy_Y(cache.get_cached_encoding(args[0]));
 
@@ -543,15 +544,16 @@ void slstar_encoder::add_and(expr * ex, expr * const * args, unsigned num) {
 void slstar_encoder::add_or(expr * ex, expr * const * args, unsigned num) {
     bool is_spatial = is_any_spatial(args,num);
     if(is_spatial) {
-        sl_enc * enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
+        sl_enc* enc = new sl_enc(m, set_enc, needs_tree_footprint, needs_list_footprint);
         enc->is_spatial = is_spatial;
         enc->copy_Y(cache.get_cached_encoding(args[0]));
 
         vector<expr*> orargsA;
         vector<expr*> andargsB;
         for(unsigned i=0; i<num; i++) {
-            orargsA.push_back(cache.get_cached_encoding(args[i])->A);
-            andargsB.push_back(cache.get_cached_encoding(args[i])->B);
+            auto cached = cache.get_cached_encoding(args[i]);
+            orargsA.push_back(cached->A);
+            andargsB.push_back(cached->B);
         }
         enc->A = m.mk_or(orargsA.size(), &orargsA[0]);
         enc->B = m.mk_and(andargsB.size(), &andargsB[0]);
@@ -564,7 +566,7 @@ void slstar_encoder::add_or(expr * ex, expr * const * args, unsigned num) {
 }
 
 bool slstar_encoder::is_any_spatial(expr * const * args, unsigned num) {
-    for(unsigned i=0; i<num; i++) {
+    for (unsigned i=0; i<num; i++) {
         SASSERT(cache.has_cached_encoding(args[i]));
         if (cache.get_cached_encoding(args[i])->is_spatial) {
             return true;
@@ -575,7 +577,7 @@ bool slstar_encoder::is_any_spatial(expr * const * args, unsigned num) {
 
 
 bool slstar_encoder::is_any_rewritten(expr * const * args, unsigned num) {
-    for(unsigned i=0; i<num; i++) {
+    for (unsigned i=0; i<num; i++) {
         SASSERT(cache.has_cached_encoding(args[i]));
         if (cache.get_cached_encoding(args[i])->is_rewritten) {
             return true;
@@ -586,7 +588,7 @@ bool slstar_encoder::is_any_rewritten(expr * const * args, unsigned num) {
 
 sl_enc_level slstar_encoder::get_lowest_level(expr * const * args, unsigned num) {
     sl_enc_level ret = SL_LEVEL_FULL;
-    for(unsigned i=0; i<num; i++) {
+    for (unsigned i=0; i<num; i++) {
         SASSERT(cache.has_cached_encoding(args[i]));
         if(cache.get_cached_encoding(args[i])->level < ret) {
             ret = cache.get_cached_encoding(args[i])->level;
@@ -691,7 +693,7 @@ void sl_enc::mk_fresh_Y() {
     Yd = set_enc.mk_fresh_array( (slstar_encoder::Y_prefix + "d").c_str() );
 }
 
-void sl_enc::copy_Y(sl_enc * other) {
+void sl_enc::copy_Y(sl_enc* other) {
     Yn = other->Yn;
     Yl = other->Yl;
     Yr = other->Yr;
@@ -701,21 +703,37 @@ void sl_enc::copy_Y(sl_enc * other) {
 sl_enc::sl_enc(ast_manager & _m, slstar_set_encoder & set_enc, bool trees, bool lists) :
     A(m), B(m), Yn(m), Yl(m), Yr(m), Yd(m), m(_m), set_enc(set_enc)
  {
+    std::cout << "Creating new sl_enc" << std::endl;
     is_spatial = false;
     is_rewritten = false;
     needs_tree_footprint = trees;
     needs_list_footprint = lists;
 }
 
+void pcount(std::ostream & out, ast* e) {
+    out << (e ? e->get_ref_count() : 0) << " ";
+}
+
+void sl_enc::pp(std::ostream & out) {
+    out << "SL_ENC {" << std::endl;
+    out << "  A: "; pcount(out, A);
+    out << mk_ismt2_pp(A, m) << std::endl;
+    out << "  B: "; pcount(out, B);
+    out << mk_ismt2_pp(B, m) << std::endl;
+    out << "  FPs: " << mk_ismt2_pp(Yn, m) << " "; pcount(out, Yn);
+    out << ", " << mk_ismt2_pp(Yl, m) << " "; pcount(out, Yl);
+    out << ", " << mk_ismt2_pp(Yr, m) << " "; pcount(out, Yr);
+    out << ", " << mk_ismt2_pp(Yd, m) << " "; pcount(out, Yr); 
+    out << std::endl << "}" << std::endl;
+}
+
 sl_enc::~sl_enc() {
-    std::cout << "Will delete sl_enc with: " << std::endl;
-    std::cout << A << std::endl;
-    std::cout << B << std::endl;
-    std::cout << "FPs: " << Yn << ", " << Yl << ", " << Yr << ", " << Yd << std::endl;
+    std::cout << "Will delete sl_enc: " << std::endl;
+    pp(std::cout);
 }
 
 /**
- * 
+ * enc_cache
  */
 
 enc_cache::enc_cache(ast_manager & m, sort_ref const& loc_sort): m(m), m_loc_sort(loc_sort) {
@@ -723,11 +741,17 @@ enc_cache::enc_cache(ast_manager & m, sort_ref const& loc_sort): m(m), m_loc_sor
 }
 
 void enc_cache::clear_enc_dict() {
+    std::cout << "Will clear encoding cache that contains encodings of ";
+    for (auto it = encoding.begin(); it != encoding.end(); it++) {
+        std::cout << mk_ismt2_pp(it->first, m) << " ";
+    }
+    std::cout << std::endl;
     for(auto it=encoding.begin(); it!=encoding.end(); it++) {
         sl_enc* enc = it->second;
         delete enc;
     }
     encoding.clear();
+    std::cout << "Done clearing encoding cache" << std::endl;
 }
 
 void enc_cache::clear_loc_vars(){
@@ -769,9 +793,16 @@ bool enc_cache::has_cached_encoding(expr * e) const {
     return encoding.find(e) != encoding.end();
 }
 
-sl_enc* enc_cache::get_cached_encoding(expr * e) const {
+sl_enc * enc_cache::get_cached_encoding(expr * e) const {
     SASSERT(has_cached_encoding(e));
     return encoding.at(e);
+}
+
+void enc_cache::add_encoding(expr * e, sl_enc * enc) {
+    std::cout << "Will add encoding of " << mk_ismt2_pp(e, m) << " to cache (old cache size: " << encoding.size() << ")" << std::endl;
+    // TODO: Perhaps assert that the cache does not yet contain an encoding of e?
+    encoding.emplace(e, enc);
+    std::cout << "Done adding encoding of " << mk_ismt2_pp(e, m) << " to cache (new cache size: " << encoding.size() << ")" << std::endl;
 }
 
 bool enc_cache::has_encoded_loc(expr * e) const {
@@ -792,13 +823,11 @@ void enc_cache::add_encoded_loc(expr * e, app * encoded) {
     m.inc_ref(encoded);
 }
 
-void enc_cache::add_encoding(expr * e, sl_enc* enc) {
-    // TODO: Perhaps assert that there isn't already something in the cache?
-    encoding[e] = enc;
-}
-
 void enc_cache::uncache(expr *const e) {
+    std::cout << "Will remove encoding of " << mk_ismt2_pp(e, m) << " from cache" << std::endl;
     encoding.erase(e);
+    // TODO[REF]: Delete cached encoding?
+    std::cout << "Done removing." << std::endl;
 }
 
 std::unordered_set<app*> enc_cache::all_encoded_consts() const {
