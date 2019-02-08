@@ -35,7 +35,7 @@ app * pred_encoder::mk_reach1(expr * Z,
     for(unsigned i=0; i<xlocs.size(); i++) {
         for(unsigned j=0; j<xlocs.size(); j++) {
             //if (i==j) continue; TODOsl?
-            expr * tmp = m.mk_and(enc.mk_is_element(xlocs[i], Z), m.mk_not(mk_isstop(xlocs[j], stops)), mk_is_successor(xlocs[i], xlocs[j]) );
+            expr * tmp = m.mk_and(enc.set_enc.mk_is_element(xlocs[i], Z), m.mk_not(mk_isstop(xlocs[j], stops)), mk_is_successor(xlocs[i], xlocs[j]) );
             expr * reachargs[] = {xlocs[i], xlocs[j]};
             andargs.push_back( m.mk_iff(m.mk_app(reach, reachargs), tmp));
         }
@@ -99,15 +99,15 @@ app * pred_encoder::mk_footprint(expr * xenc,
     for(unsigned i=0; i<xlocs.size(); i++) {
         func_decl * rN = prev_reach[prev_reach.size()-1];
         expr * reachargs[] = {xenc, xlocs[i]};
-        andargs.push_back( m.mk_iff(enc.mk_is_element(xlocs[i], Z), 
+        andargs.push_back( m.mk_iff(enc.set_enc.mk_is_element(xlocs[i], Z), 
             m.mk_or(
                 m.mk_eq(xenc, xlocs[i]), 
                 m.mk_app(rN, reachargs))) );
     }
 
     return m.mk_and( 
-        enc.mk_subset_eq(Z, enc.mk_set_from_elements(xlocs.c_ptr(), xlocs.size())),
-        m.mk_implies(mk_emptyZ(xenc,xlocs, stops), enc.mk_is_empty(Z)),
+        enc.set_enc.mk_subset_eq(Z, enc.set_enc.mk_set_from_elements(xlocs.c_ptr(), xlocs.size())),
+        m.mk_implies(mk_emptyZ(xenc,xlocs, stops), enc.set_enc.mk_is_empty(Z)),
         m.mk_implies(m.mk_not(mk_emptyZ(xenc,xlocs, stops)),  // TODOsl cache emptyZ?
             m.mk_and(andargs.size(), &andargs[0]) ) );
 }
@@ -128,7 +128,7 @@ app * pred_encoder::mk_structure(expr * xenc,
     //}
     
     return m.mk_and(
-        m.mk_implies(m.mk_not(mk_isstop(xenc, stops)), enc.mk_is_element(xenc,Z)),
+        m.mk_implies(m.mk_not(mk_isstop(xenc, stops)), enc.set_enc.mk_is_element(xenc,Z)),
         mk_oneparent(Z,xlocs),
         m.mk_not(reachable));
 }
@@ -155,7 +155,7 @@ app * pred_encoder::mk_stopsoccur(expr * xenc, expr * Z, expr_ref_vector const& 
     std::vector<expr*> andargs, orargs;
     for(unsigned i=0; i<stops.size(); i++) {
         for(unsigned p=0; p<xlocs.size(); p++) {
-            orargs.push_back( m.mk_and(enc.mk_is_element(xlocs[p],Z), mk_is_successor(xlocs[p], stops[i]) ) );
+            orargs.push_back( m.mk_and(enc.set_enc.mk_is_element(xlocs[p],Z), mk_is_successor(xlocs[p], stops[i]) ) );
         }
         andargs.push_back(m.mk_or(orargs.size(), &orargs[0]));
         orargs.clear();
@@ -168,7 +168,7 @@ app * pred_encoder::mk_Rn_f(func_decl * f, func_decl * rn, expr * x, expr * y, e
     return m.mk_or(
         m.mk_eq(m.mk_app(f,x), y),
         m.mk_and(
-            enc.mk_is_element(m.mk_app(f,x), Z), 
+            enc.set_enc.mk_is_element(m.mk_app(f,x), Z), 
             m.mk_app(rn,reachargs)));
 }
 
@@ -181,14 +181,14 @@ app * pred_encoder::mk_fstop(expr * xp, expr * s, func_decl * f, expr * Z, expr_
     for(unsigned c=0; c<xlocs.size(); c++) {
         orargs.push_back( m.mk_and( 
             mk_Rn_f(f,rN,xp,xlocs[c],Z),
-            enc.mk_is_element(xlocs[c],Z), 
+            enc.set_enc.mk_is_element(xlocs[c],Z), 
             mk_is_successor(xlocs[c], s) ) );
     }
     return m.mk_or(orargs.size(), &orargs[0]);;
 }
 
 app * pred_encoder::mk_is_location(expr* xenc, expr_ref_vector const& xlocs){
-    return enc.mk_is_element(xenc, enc.mk_set_from_elements(xlocs.c_ptr(), xlocs.size()));
+    return enc.set_enc.mk_is_element(xenc, enc.set_enc.mk_set_from_elements(xlocs.c_ptr(), xlocs.size()));
 }
 
 app * pred_encoder::mk_bdata(expr * Pcont, expr * Z, func_decl * f, 
@@ -215,8 +215,8 @@ app * pred_encoder::mk_bdata(expr * Pcont, expr * Z, func_decl * f,
             }
             andargs.push_back( m.mk_implies( 
                 m.mk_and(
-                    enc.mk_is_element(xlocs[i], Z),
-                    enc.mk_is_element(xlocs[j], Z),
+                    enc.set_enc.mk_is_element(xlocs[i], Z),
+                    enc.set_enc.mk_is_element(xlocs[j], Z),
                     mk_Rn_f(f,rn,xlocs[i], xlocs[j], Z)),
                 m.mk_app(Pdecl, pargs.size(), &pargs[0]) ));
         }
@@ -240,7 +240,7 @@ app * pred_encoder::mk_udata(expr * Pcont, expr * Z, expr_ref_vector const& xloc
             }
         }
         andargs.push_back( m.mk_implies( 
-            enc.mk_is_element(xlocs[i], Z),
+            enc.set_enc.mk_is_element(xlocs[i], Z),
             m.mk_app(Pdecl, pargs.size(), &pargs[0]) ));
     }
     return m.mk_and(andargs.size(), &andargs[0]);

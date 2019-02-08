@@ -17,7 +17,7 @@ void list_encoder::add_list(expr * ex, expr * const * args, unsigned num, sl_enc
 
 void list_encoder::add_list_uf(expr * ex, expr * const * args, unsigned num) {
     SASSERT(is_app(ex));
-    sl_enc * enc = new sl_enc(m,this->enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
+    sl_enc * enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
 
@@ -31,7 +31,7 @@ void list_encoder::add_list_uf(expr * ex, expr * const * args, unsigned num) {
 
 void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
     SASSERT(is_app(ex));
-    sl_enc * enc = new sl_enc(m,this->enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
+    sl_enc * enc = new sl_enc(m,this->enc.set_enc, this->enc.needs_tree_footprint, this->enc.needs_list_footprint);
     enc->mk_fresh_Y();
     enc->is_spatial = true;
     enc->level = SL_LEVEL_FULL;
@@ -71,7 +71,7 @@ void list_encoder::add_list_full(expr * ex, expr * const * args, unsigned num) {
         return;
     }
 
-    expr * Z = this->enc.mk_fresh_array(slstar_encoder::Z_prefix.c_str());
+    expr * Z = this->enc.set_enc.mk_fresh_array(slstar_encoder::Z_prefix.c_str());
     std::vector<expr*> andargs;
     // reachability creates all r_i^Z (prev_reach)
     // -> B must be defined before A otherwise prev_reach is empty
@@ -120,14 +120,14 @@ app * list_encoder::mk_defineY(sl_enc * e, expr * Z) {
             andargs.push_back(m.mk_eq(e->Yn, Z));
         }
     } else {
-        andargs.push_back(enc.mk_is_empty(e->Yd));
+        andargs.push_back(enc.set_enc.mk_is_empty(e->Yd));
         if(enc.needs_list_footprint){
-            andargs.push_back(enc.mk_is_empty(e->Yn));
+            andargs.push_back(enc.set_enc.mk_is_empty(e->Yn));
         }
     }
     if(enc.needs_tree_footprint){
-        andargs.push_back(enc.mk_is_empty(e->Yl));
-        andargs.push_back(enc.mk_is_empty(e->Yr));
+        andargs.push_back(enc.set_enc.mk_is_empty(e->Yl));
+        andargs.push_back(enc.set_enc.mk_is_empty(e->Yr));
     }
     return m.mk_and(andargs.size(), &andargs[0]);
 }
@@ -144,7 +144,7 @@ app * list_encoder::mk_oneparent(expr * Z, expr_ref_vector const& xlocs) {
         for(unsigned j = 0; j<xlocs.size(); j++) {
             if(i==j) continue;
             andargs.push_back( m.mk_implies(
-                m.mk_and( enc.mk_is_element(xlocs[j], Z), m.mk_not(m.mk_eq(xlocs[i], xlocs[j])) ),
+                m.mk_and( enc.set_enc.mk_is_element(xlocs[j], Z), m.mk_not(m.mk_eq(xlocs[i], xlocs[j])) ),
                 mk_all_succs_different(xlocs[i], xlocs[j])    
             ));
         }
@@ -156,7 +156,7 @@ app * list_encoder::mk_stopleaves(expr * Z, expr_ref_vector const& xlocs, std::v
     std::vector<expr*> andargs;
     for(unsigned i=0; i<xlocs.size(); i++ ) {
         andargs.push_back(m.mk_implies(
-            m.mk_and(enc.mk_is_element(xlocs[i], Z), m.mk_not(enc.mk_is_element(m.mk_app(enc.f_next, xlocs[i]),Z)) ), 
+            m.mk_and(enc.set_enc.mk_is_element(xlocs[i], Z), m.mk_not(enc.set_enc.mk_is_element(m.mk_app(enc.f_next, xlocs[i]),Z)) ), 
             mk_isstop(m.mk_app(enc.f_next, xlocs[i]), stops)));
     }
     return m.mk_and(andargs.size(), &andargs[0]);

@@ -44,6 +44,30 @@ struct sl_bounds {
     }
 };
 
+class slstar_set_encoder {
+private:
+    ast_manager & m;
+    array_util m_arrayutil;
+    sort_ref m_array_sort;
+    sort_ref m_loc_sort;
+public:
+    slstar_set_encoder(ast_manager & m, sort * loc_sort);
+    ~slstar_set_encoder();
+
+    app * mk_fresh_array(char const * prefix);
+    app * mk_empty_array();
+    app * mk_full_array();
+
+    app * mk_set_from_elements(expr * const * elem, unsigned num );
+    app * mk_set_remove_element(expr * x, expr * set);
+    app * mk_is_empty(expr * set);
+    app * mk_is_element(expr * x, expr * set);
+
+    app * mk_subset_eq(expr * lhs, expr * rhs);
+    app * mk_union(expr * const *args, unsigned num);
+    app * mk_intersect(expr * lhs, expr * rhs);
+};
+
 class slstar_encoder {
     friend class pred_encoder;
     friend class list_encoder;
@@ -53,8 +77,8 @@ protected:
     ast_manager            & m;
     bool_rewriter            m_boolrw;
     sl_bounds                bounds;
+    slstar_set_encoder       set_enc;
 
-    sort_ref m_array_sort;
     sort_ref m_loc_sort;
 
     func_decl_ref f_next;
@@ -80,6 +104,7 @@ protected:
 
     bool needs_tree_footprint;
     bool needs_list_footprint;
+
 public:
     static const std::string Z_prefix;
     static const std::string Y_prefix;
@@ -89,24 +114,10 @@ public:
     static const std::string xt_prefix;
 
     slstar_util              util;
-    array_util               m_arrayutil;
     sl_enc_level             current_level;
 
     slstar_encoder(ast_manager & m, sort * loc_sort);
     ~slstar_encoder();
-
-    app * mk_fresh_array(char const * prefix);
-    app * mk_empty_array();
-    app * mk_full_array();
-
-    app * mk_set_from_elements(expr * const * elem, unsigned num );
-    app * mk_set_remove_element(expr * x, expr * set);
-    app * mk_is_empty(expr * set);
-    app * mk_is_element(expr * x, expr * set);
-
-    app * mk_subset_eq(expr * lhs, expr * rhs);
-    app * mk_union(expr * const *args, unsigned num);
-    app * mk_intersect(expr * lhs, expr * rhs);
 
     app * mk_encoded_loc(expr * ex);
     app * mk_global_constraints();
@@ -156,12 +167,12 @@ public:
     bool needs_list_footprint;
     sl_enc_level level;
 
-    sl_enc(ast_manager & m, slstar_encoder & enc, bool trees, bool lists );
+    sl_enc(ast_manager & m, slstar_set_encoder & set_enc, bool trees, bool lists );
     ~sl_enc();
 private:
 
-    ast_manager            & m;
-    slstar_encoder         & enc;
+    ast_manager & m;
+    slstar_set_encoder & set_enc;
     void mk_fresh_Y();
     void copy_Y(sl_enc * other);
     void inc_ref();
