@@ -105,22 +105,22 @@ public:
     app* get_encoded_loc(expr * e) const;
     void add_encoded_loc(expr * e, app * encoded);
     void uncache(expr *const e);
-    void clear_enc_dict();
     std::unordered_set<app*> all_encoded_consts() const;
     std::unordered_map<sort*, func_decl*> get_f_dat_map() const;
+
+    void clear_encoding();
 private:
     ast_manager & m; 
     sort_ref const& m_loc_sort;
 
-    #if defined(Z3DEBUG)
-    std::unordered_set<expr*>          encodedlocs;
-    #endif  
     std::unordered_map<sort*, func_decl*> f_dat_map;
     std::unordered_map<expr*, sl_enc*> encoding;
     std::unordered_map<expr*, app*> locencoding;
     std::unordered_set<app*> encoded_const;
 
-    void clear_loc_vars();
+    void clear_f_dat_map();
+    void clear_encoded_const();
+    void clear_locencoding();
 };
 
 class slstar_encoder {
@@ -174,16 +174,14 @@ public:
     void clear_X_vector();
 
     void prepare(sl_bounds bd, sl_enc_level level);
-    void encode_top(expr * current, expr_ref & new_ex);
+    expr* encode_top(expr * current);
     void encode(expr * ex);
 
     void add_const(expr * ex);
     void add_floc_fdat(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
     void add_eq(expr * ex, expr * const * args, unsigned num);         /* T_N^s */
     void add_distinct(expr * ex, expr * const * args, unsigned num);   /* T_N^s */
-    void add_pton(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
-    void add_ptol(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
-    void add_ptor(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
+    void add_pto(func_decl_ref f_fld, expr * ex, expr * const * args, unsigned num);
     void add_ptod(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
     void add_ptolr(expr * ex, expr * const * args, unsigned num);  /* T_N^s */
     void add_sep(expr * ex, expr * const * args, unsigned num);    /* T_N^s */

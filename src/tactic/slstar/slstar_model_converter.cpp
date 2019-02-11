@@ -64,14 +64,15 @@ slstar_model_converter::slstar_model_converter(ast_manager & m, slstar_encoder &
 
 }
 
-slstar_model_converter::~slstar_model_converter(){
-    for(auto it=list_locs.begin(); it!=list_locs.end(); it++) {
+slstar_model_converter::~slstar_model_converter() {
+    TRACE("slstar", tout << "Destroying model converter" << std::endl;);
+    for (auto it=list_locs.begin(); it!=list_locs.end(); it++) {
         m.dec_ref(*it);
     }
-    for(auto it=tree_locs.begin(); it!=tree_locs.end(); it++) {
+    for (auto it=tree_locs.begin(); it!=tree_locs.end(); it++) {
         m.dec_ref(*it);
     }    
-    for(auto it=loc_constants.begin(); it!=loc_constants.end(); it++) {
+    for (auto it=loc_constants.begin(); it!=loc_constants.end(); it++) {
         m.dec_ref(*it);
     }
 }

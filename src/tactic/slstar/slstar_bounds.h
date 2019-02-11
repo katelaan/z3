@@ -1,3 +1,6 @@
+#ifndef SLSTAR_BOUNDS_H_
+#define SLSTAR_BOUNDS_H_
+
 #include "ast/slstar_decl_plugin.h"
 #include "ast/slstar/slstar_encoder.h"
 
@@ -19,3 +22,5 @@ public:
     sl_bounds calc_bounds(goal_ref const & g);
     slstar_bound_computation(ast_manager & m, slstar_util& util);
 };
+
+#endif

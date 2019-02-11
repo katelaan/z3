@@ -6,6 +6,7 @@ sort * slstar_decl_plugin::get_loc_sort(ast_manager * m) {
     if( s_loc_sort == nullptr ) {
         auto m_arith_fid = m->mk_family_id("arith");
         s_loc_sort = m->mk_sort(m_arith_fid, INT_SORT);
+        // TODO[REF]: We're incrementing this reference but will never decrement it?
         m->inc_ref(s_loc_sort);
     }
     return s_loc_sort;    
@@ -50,6 +51,7 @@ decl_plugin * slstar_decl_plugin::mk_fresh() {
 void slstar_decl_plugin::set_loc_sort( sort * &lhs , sort * rhs ) {
     if(lhs == nullptr) {
         lhs = rhs;
+        // TODO[REF]: We're incrementing this reference but will never decrement it?
         m_manager->inc_ref(rhs);
     } else if (!lhs->is_sort_of(rhs->get_family_id(), rhs->get_decl_kind())) {
         m_manager->raise_exception("only one location sort is supported");

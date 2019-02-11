@@ -12,6 +12,7 @@
 #include "tactic/slstar/slstar_model_converter.h"
 #include "tactic/slstar/slstar_spatial_eq_propagation_tactic.h"
 #include "tactic/slstar/slstar_bounds.h"
+#include "tactic/slstar/utils.h"
 
 #include <unordered_set>
 
@@ -34,7 +35,12 @@ class slstar_tactic : public tactic {
             m_produce_unsat_cores(false),
             m_param(p),
             equality_bins(eq_bins) { 
+                std::cout << "Creating slstar_tactic implementation" << std::endl;
             }
+
+        ~imp() {
+            //TRACE("slstar", tout << "Destroying tactic implementation" << std::endl;);
+        }
 
         void updt_params(params_ref const & p) {
         }
@@ -42,16 +48,21 @@ class slstar_tactic : public tactic {
         void perform_encoding(slstar_encoder & encoder, goal_ref const & g, goal_ref_buffer & result, bool contains_calls) {
             
             goal* goal_tmp = alloc(goal, *g, false);
+            //std::cout << "Initial goal " << (*g) << std::endl;
 
-            expr_ref new_curr(m);
             unsigned size = g->size();
             for (unsigned idx = 0; idx < size; idx++) {
                 if (g->inconsistent())
                     break;
-                expr * curr = g->form(idx);
-                encoder.encode_top(curr, new_curr);
-
-                goal_tmp->assert_expr(new_curr);
+                expr* curr = g->form(idx);
+                expr* top_level_enc = encoder.encode_top(curr);
+                print_usages(top_level_enc, m, "BEFORE INC");
+                // TODO[Ref]: Do we have to inc here?
+                m.inc_ref(top_level_enc);
+                print_usages(top_level_enc, m, "AFTER INC");
+                TRACE("slstar_ref", tout << "Incrementing ref count for top-level encoding" << std::endl;);
+                goal_tmp->assert_expr(top_level_enc);
+                print_usages(top_level_enc, m, "AFTER ASSERTING AS GOAL");
             }
             
             // assert the equalness of all substituted locations
@@ -70,10 +81,9 @@ class slstar_tactic : public tactic {
                 if(eq_args.size()>=2) {
                     goal_tmp->assert_expr(m.mk_app(m.get_basic_family_id(), OP_EQ, eq_args.size(), &eq_args[0]));
                 }
-
             }
 
-            if(contains_calls) {
+            if (contains_calls) {
                 goal_tmp->assert_expr(encoder.mk_global_constraints());
             }
 
@@ -104,19 +114,27 @@ class slstar_tactic : public tactic {
             m_produce_models      = g->models_enabled();
             m_produce_unsat_cores = g->unsat_core_enabled();
 
+            //m.debug_ref_count();
+            TRACE("slstar", tout  << "Will run slstar_reduce tactic on goal "; g->display(tout););
+
             result.reset();
             tactic_report report("slstar_reduce", *g);
 
             TRACE("slstar", tout << "BEFORE: " << std::endl; g->display(tout););
 
-            slstar_bound_computation bc(m, util);
-            sl_bounds bd = bc.calc_bounds(g);
+            // FIXME: Just hardcoding this for testing; revert to computation once mem leaks are fixed
+            //slstar_bound_computation bc(m, util);
+            //sl_bounds bd = bc.calc_bounds(g);
+            sl_bounds bd;
+            bd.n_list = 1;
+            bd.n_tree = 0;
 
             TRACE("slstar-bound", tout << "Bounds:" << 
                 " nList " << bd.n_list << 
                 " nTree " << bd.n_tree << std::endl; );
 
             if (g->inconsistent()) {
+                TRACE("slstar", tout << "Aborting SL* reduce because goal is inconsistent" << std::endl;);
                 result.push_back(g.get());
                 return;
             }
@@ -125,11 +143,13 @@ class slstar_tactic : public tactic {
 
             static const sl_enc_level levels[] = {SL_LEVEL_UF, SL_LEVEL_FULL};
 
-            for (unsigned i = 0; i<sizeof(levels)/sizeof(sl_enc_level); i++) {                
+            //for (unsigned i = 0; i<sizeof(levels)/sizeof(sl_enc_level); i++) {                
+            for (unsigned i = 1; i<sizeof(levels)/sizeof(sl_enc_level); i++) {                
                 encoder.prepare(bd, levels[i]);
                 perform_encoding(encoder, g, result, bd.contains_calls);
                 
                 if (levels[i] != SL_LEVEL_FULL) {
+                    TRACE("slstar", tout << "Check unsatisfiability of non-final level";);
                     goal_ref_buffer tmp_result;
                     goal_ref tmp_goal_in(result[0]);
                     //tactic* t = mk_default_tactic(m,m_param);
@@ -138,42 +158,43 @@ class slstar_tactic : public tactic {
                     t->cleanup();
                     SASSERT(tmp_result.size() == 1);
 
-                    if(tmp_result[0]->is_decided_unsat()) {
-                        std::cout << "Level " << levels[i] << " showed unsatisfiability => Return" << std::endl;
+                    if (tmp_result[0]->is_decided_unsat()) {
+                        TRACE("slstar", tout << "Level " << levels[i] << " showed unsatisfiability => Return" << std::endl;);
 
                         result.reset();
                         result.append(tmp_result);
 
                         tmp_result.reset();
                         // TODO: This should be achieved via a higher-level API that deals with levels
-                        encoder.cache.clear_enc_dict();
+                        TRACE("slstar", tout << std::flush;);
+                        encoder.cache.clear_encoding();
                         release_eq_symbols();
                         return;
                     } else {
-                        std::cout << "Level " << levels[i] << " could not show unsatisfiability => Go to next level" << std::endl;
+                        TRACE("slstar", tout << "Level " << levels[i] << " could not show unsatisfiability => Go to next level" << std::endl;);
                     }
                     tmp_result.reset();
                     result.reset();
                 }
             }
 
-            std::cout << "Finished encoding => Clean up caches" << std::endl;
-
-            // TODO: This should be achieved via a higher-level API that deals with levels
-            //encoder.cache.clear_enc_dict();
+            TRACE("slstar", tout << "Finished encoding => Clean up equality cache" << std::endl;);
             release_eq_symbols();
-
-            std::cout << "Finished clean up" << std::endl;
+            TRACE("slstar", tout << "Finished clean up" << std::endl;);
 
             SASSERT(g->is_well_sorted());
 
             if (g->models_enabled() && !g->inconsistent()) {
-                slstar_model_converter* mc = alloc(slstar_model_converter, m, encoder);
-                TRACE("slstar", tout << "AFTER: " << std::endl; result[0]->display(tout);
-                            if (mc) mc->display(tout); tout << std::endl; );
+                // TODO[REF] Reactivate model converter once leaks elsewhere are fixed
+                //TRACE("slstar", 
+                    
+                    // slstar_model_converter mc(m, encoder);
+                    // tout << "AFTER: " << std::endl; result[0]->display(tout);
+                    // mc.display(tout); tout << std::endl; 
+                //);
             }
 
-            std::cout << "Encoder will go out of scope now" << std::endl;
+            TRACE("slstar", tout << "Encoder will go out of scope now" << std::endl;);
         }
     };
 
@@ -285,7 +306,7 @@ tactic * mk_slstar_reduce_tactic(ast_manager & m, params_ref const & p) {
 
     tactic * st = and_then( /*mk_simplify_tactic(m, p),
                             mk_propagate_values_tactic(m, p),*/
-                            mk_slstar_spatial_eq_propagation_tactic(m, equalities),
+                            //mk_slstar_spatial_eq_propagation_tactic(m, equalities),
                             mk_slstar_tactic(m, equalities, p),
                             mk_propagate_values_tactic(m, p),
                             mk_default_tactic(m, p));
